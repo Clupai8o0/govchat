@@ -186,7 +186,7 @@ export function GovChat() {
 
 			{/* Header */}
 			<header className="relative z-10 border-b border-white/[0.05] bg-black/10 backdrop-blur-xl flex-shrink-0">
-				<div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
+				<div className="px-4 sm:px-6 py-3 sm:py-4">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">
 							<div className="w-10 h-10 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-500 flex items-center justify-center">
