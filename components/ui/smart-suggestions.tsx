@@ -214,31 +214,6 @@ export function SmartSuggestions({
         )}
       </div>
 
-      {/* Quick Search Bar */}
-      <div className="bg-white/[0.02] rounded-lg border border-white/[0.05] p-3 flex-shrink-0">
-        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
-          <Search className="w-4 h-4 text-white/60 flex-shrink-0" />
-          <input
-            type="text"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about any topic..."
-            className="flex-1 bg-transparent text-white text-sm placeholder:text-white/40 focus:outline-none"
-          />
-          {searchValue.trim() && (
-            <motion.button
-              type="submit"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="p-1 rounded bg-violet-500/20 hover:bg-violet-500/30 transition-colors"
-            >
-              <ArrowRight className="w-3 h-3 text-violet-300" />
-            </motion.button>
-          )}
-        </form>
-      </div>
-
       {/* Scrollable content area */}
       <div className="flex-1 min-h-0">
         {/* Loading State */}
