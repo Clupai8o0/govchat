@@ -25,12 +25,7 @@ type ChatAction =
   | { type: 'SET_MOBILE_SIDEBAR'; payload: boolean };
 
 const initialSettings: ChatSettings = {
-  useOpenAI: true,
-  topK: 4,
-  chunkSize: 900,
-  chunkOverlap: 120,
-  modelName: 'gpt-4o-mini',
-  embedModel: 'text-embedding-3-small',
+  apiUrl: 'http://127.0.0.1:8001',
 };
 
 const initialState: ChatState = {

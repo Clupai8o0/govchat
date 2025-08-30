@@ -1,37 +1,41 @@
+// Simplified message structure for query-only functionality
 export interface ChatMessage {
   id: string;
   question: string;
   answer: string;
   timestamp: number;
-  audit: AuditData;
 }
 
-export interface AuditData {
-  question: string;
-  trust_score: number;
-  retrieved: RetrievedSource[];
-  timestamp: number;
+// Dataset information from the API
+export interface Dataset {
+  id: string;
+  title: string;
+  description: string;
+  agency: string;
+  api_url: string;
+  similarity_score?: number;
 }
 
-export interface RetrievedSource {
-  source: string;
-  similarity: number | null;
-  recency_flag: boolean;
-  preview: string | null;
+// Source information for display
+export interface DatasetSource {
+  title: string;
+  agency: string;
+  api_url: string;
+  similarity: number;
 }
 
-export interface ChatSettings {
-  useOpenAI: boolean;
-  topK: number;
-  chunkSize: number;
-  chunkOverlap: number;
-  modelName: string;
-  embedModel: string;
-}
-
-export interface ApiResponse {
+// API response structure matching your FastAPI endpoint
+export interface QueryResponse {
+  query: string;
   answer: string;
-  audit: AuditData;
+  sources: DatasetSource[];
+  hits: Dataset[];
+  count: number;
+}
+
+// Simplified chat settings (most settings handled by backend)
+export interface ChatSettings {
+  apiUrl: string;
 }
 
 export interface UploadedFile {

@@ -1,7 +1,7 @@
-import { ApiResponse, ChatSettings, UploadedFile } from './types';
+import { QueryResponse, ChatSettings, UploadedFile } from './types';
 
-// API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// API configuration - matches your FastAPI server
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001';
 
 class ChatAPI {
   private baseUrl: string;
@@ -11,32 +11,53 @@ class ChatAPI {
   }
 
   /**
-   * Send a question to the chat API and get a response with audit data
+   * Send a question to the dataset query API
    */
-  async askQuestion(question: string, settings: ChatSettings): Promise<ApiResponse> {
+  async askQuestion(question: string, settings: ChatSettings): Promise<QueryResponse> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/chat`, {
-        method: 'POST',
+      // Use URLSearchParams to properly encode the query
+      const params = new URLSearchParams({
+        q: question.trim()
+      });
+
+      const response = await fetch(`${this.baseUrl}/query?${params}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          question,
-          settings,
-        }),
       });
 
       if (!response.ok) {
         throw new Error(`API request failed: ${response.statusText}`);
       }
 
-      const data = await response.json();
+      const data: QueryResponse = await response.json();
       return data;
     } catch (error) {
       console.error('Error asking question:', error);
       
       // Fallback mock response for development
       return this.getMockResponse(question);
+    }
+  }
+
+  /**
+   * Health check endpoint
+   */
+  async ping(): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseUrl}/ping`, {
+        method: 'GET',
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ping failed: ${response.statusText}`);
+      }
+
+      return await response.text();
+    } catch (error) {
+      console.error('Error pinging server:', error);
+      return 'Server unavailable';
     }
   }
 
@@ -134,32 +155,47 @@ class ChatAPI {
   /**
    * Mock response for development/fallback
    */
-  private getMockResponse(question: string): ApiResponse {
+  private getMockResponse(question: string): QueryResponse {
     const mockSources = [
       {
-        source: 'c6bce6f80cfd.txt',
-        similarity: 0.85,
-        recency_flag: true,
-        preview: 'The available student data includes statistics from various years, specifically from 2004 to 2023. Each year has its own set of selected higher education statistics that provide insights into student demographics, enrollment figures, and other relevant metrics.',
+        title: "Labour force - underemployment and underutilisation",
+        agency: "ABS",
+        api_url: "nan",
+        similarity: 0.277
       },
       {
-        source: 'c6bce6f80cfd.txt',
-        similarity: 0.78,
-        recency_flag: true,
-        preview: 'For more detailed information about specific statistics or trends in student data, additional data from the individual years would be necessary.',
+        title: "Labour Force Educational Attendance",
+        agency: "ABS", 
+        api_url: "nan",
+        similarity: 0.24
+      }
+    ];
+
+    const mockHits = [
+      {
+        id: "LF_UNDER",
+        title: "Labour force - underemployment and underutilisation",
+        description: "Statistics on underutilised persons by Region, Age and Sex. Catalogue number: 6202.0, tables 22 to 25.",
+        agency: "ABS",
+        api_url: "nan",
+        similarity_score: 0.277
       },
+      {
+        id: "LF_EDU",
+        title: "Labour Force Educational Attendance", 
+        description: "Headline estimates of employment, unemployment, underemployment, participation and hours worked from the monthly Labour Force Survey. By education status.",
+        agency: "ABS",
+        api_url: "nan",
+        similarity_score: 0.24
+      }
     ];
 
     return {
-      answer: `Based on the available data, I can tell you about the student information in our system. The available student data includes statistics from various years, specifically from 2004 to 2023 [1]. Each year has its own set of selected higher education statistics that provide insights into student demographics, enrollment figures, and other relevant metrics [1]. The data is disseminated through publications, datasets, and reports, and is utilized by government departments, higher education institutions, researchers, and the community at large [2].
-
-For more detailed information about specific statistics or trends in student data, additional data from the individual years would be necessary [2].`,
-      audit: {
-        question,
-        trust_score: 68,
-        retrieved: mockSources,
-        timestamp: Date.now(),
-      },
+      query: question,
+      answer: `I found ${mockHits.length} datasets related to "${question}". These datasets provide information about labour force statistics and educational attendance which may help with your research.`,
+      sources: mockSources,
+      hits: mockHits,
+      count: mockHits.length
     };
   }
 }
