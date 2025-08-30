@@ -10,14 +10,16 @@ interface ChatHistoryProps {
   messages: ChatMessage[];
   isLoading?: boolean;
   className?: string;
+  onShowAudit?: (audit: ChatMessage['audit']) => void;
 }
 
 interface MessageBubbleProps {
   message: ChatMessage;
   index: number;
+  onShowAudit?: (audit: ChatMessage['audit']) => void;
 }
 
-function MessageBubble({ message, index }: MessageBubbleProps) {
+function MessageBubble({ message, index, onShowAudit }: MessageBubbleProps) {
   const formatTime = (timestamp: number) => {
     return new Date(timestamp).toLocaleTimeString('en-US', {
       hour: '2-digit',
@@ -25,7 +27,12 @@ function MessageBubble({ message, index }: MessageBubbleProps) {
     });
   };
 
-
+  const getTrustColor = (score: number) => {
+    if (score >= 80) return 'text-green-400';
+    if (score >= 60) return 'text-yellow-400';
+    if (score >= 40) return 'text-orange-400';
+    return 'text-red-400';
+  };
 
   return (
     <motion.div
@@ -78,12 +85,32 @@ function MessageBubble({ message, index }: MessageBubbleProps) {
             </div>
           </motion.div>
           
-          {/* Timestamp */}
-          <div className="flex items-center justify-start mt-2 px-2">
-            <div className="flex items-center gap-2">
-              <Clock className="w-3 h-3 text-white/40" />
-              <span className="text-xs text-white/60">{formatTime(message.timestamp)}</span>
+          {/* Trust Score & Audit Button */}
+          <div className="flex items-center justify-between mt-2 px-2">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-white/60">Trust:</span>
+                <span className={cn("text-xs font-medium", getTrustColor(message.audit.trust_score))}>
+                  {message.audit.trust_score}/100
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-white/60">Sources:</span>
+                <span className="text-xs text-white/80">{message.audit.retrieved.length}</span>
+              </div>
             </div>
+            
+            {onShowAudit && (
+              <motion.button
+                onClick={() => onShowAudit(message.audit)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors bg-white/[0.02] px-2 py-1 rounded border border-white/[0.05]"
+              >
+                <span>View audit</span>
+                <ChevronDown className="w-3 h-3" />
+              </motion.button>
+            )}
           </div>
         </div>
       </div>
@@ -130,7 +157,8 @@ function TypingIndicator() {
 export function ChatHistory({ 
   messages, 
   isLoading = false, 
-  className
+  className,
+  onShowAudit 
 }: ChatHistoryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -190,7 +218,7 @@ export function ChatHistory({
               Welcome to GovChat
             </h3>
             <p className="text-white/60 max-w-md leading-relaxed">
-              Ask questions to search and discover relevant government datasets. I'll help you find the data you need.
+              Search and discover government datasets with AI assistance. Get detailed information about relevant data sources.
             </p>
           </motion.div>
         ) : (
@@ -200,6 +228,7 @@ export function ChatHistory({
                 key={message.id}
                 message={message}
                 index={index}
+                onShowAudit={onShowAudit}
               />
             ))}
             {isLoading && <TypingIndicator />}

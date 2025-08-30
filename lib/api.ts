@@ -1,7 +1,7 @@
-import { QueryResponse, ChatSettings, UploadedFile } from './types';
+import { ApiResponse, ChatSettings, UploadedFile, QueryResponse } from './types';
 
-// API configuration - matches your FastAPI server
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001';
+// API configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
 class ChatAPI {
   private baseUrl: string;
@@ -11,16 +11,13 @@ class ChatAPI {
   }
 
   /**
-   * Send a question to the dataset query API
+   * Send a question to the query API and get a response with dataset information
    */
-  async askQuestion(question: string, settings: ChatSettings): Promise<QueryResponse> {
+  async askQuestion(question: string, settings: ChatSettings): Promise<ApiResponse> {
     try {
-      // Use URLSearchParams to properly encode the query
-      const params = new URLSearchParams({
-        q: question.trim()
-      });
-
-      const response = await fetch(`${this.baseUrl}/query?${params}`, {
+      // Encode the question for URL parameter
+      const encodedQuestion = encodeURIComponent(question);
+      const response = await fetch(`${this.baseUrl}/query?q=${encodedQuestion}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -32,7 +29,12 @@ class ChatAPI {
       }
 
       const data: QueryResponse = await response.json();
-      return data;
+      
+      // Log the API response for debugging
+      console.log('API Response:', data);
+      
+      // Transform the new API response to match the existing UI structure
+      return this.transformQueryResponse(data);
     } catch (error) {
       console.error('Error asking question:', error);
       
@@ -42,160 +44,71 @@ class ChatAPI {
   }
 
   /**
-   * Health check endpoint
+   * Transform the new API response format to the legacy format expected by the UI
    */
-  async ping(): Promise<string> {
-    try {
-      const response = await fetch(`${this.baseUrl}/ping`, {
-        method: 'GET',
-      });
+  private transformQueryResponse(queryResponse: QueryResponse): ApiResponse {
+    // Convert sources to retrieved format
+    const retrieved = queryResponse.sources.map(source => ({
+      source: source.title,
+      similarity: source.similarity,
+      recency_flag: true, // Default to true for now
+      preview: `${source.agency} dataset: ${source.title}`,
+    }));
 
-      if (!response.ok) {
-        throw new Error(`Ping failed: ${response.statusText}`);
-      }
+    // Convert trust score from 0-1 to 0-100 scale
+    const trustScore = Math.round(queryResponse.trust.score * 100);
 
-      return await response.text();
-    } catch (error) {
-      console.error('Error pinging server:', error);
-      return 'Server unavailable';
-    }
+    return {
+      answer: queryResponse.answer,
+      audit: {
+        question: queryResponse.query,
+        trust_score: trustScore,
+        retrieved: retrieved,
+        timestamp: Date.now(),
+      },
+    };
   }
 
   /**
-   * Upload files for indexing
+   * Check if the API server is running
    */
-  async uploadFiles(files: File[]): Promise<UploadedFile[]> {
+  async healthCheck(): Promise<boolean> {
     try {
-      const formData = new FormData();
-      files.forEach((file, index) => {
-        formData.append(`file_${index}`, file);
-      });
-
-      const response = await fetch(`${this.baseUrl}/api/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.files;
+      const response = await fetch(`${this.baseUrl}/ping`);
+      return response.ok && (await response.text()) === 'pong';
     } catch (error) {
-      console.error('Error uploading files:', error);
-      
-      // Return mock uploaded files for development
-      return files.map(file => ({
-        id: Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        status: 'indexed' as const,
-      }));
-    }
-  }
-
-  /**
-   * Rebuild the search index
-   */
-  async rebuildIndex(settings: ChatSettings): Promise<{ success: boolean; message: string }> {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/rebuild-index`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ settings }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Rebuild failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error rebuilding index:', error);
-      
-      // Mock success response for development
-      return { success: true, message: 'Index rebuilt successfully (mock)' };
-    }
-  }
-
-  /**
-   * Get index status and statistics
-   */
-  async getIndexStatus(): Promise<{
-    isBuilt: boolean;
-    documentCount: number;
-    lastUpdated: string | null;
-  }> {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/index-status`);
-      
-      if (!response.ok) {
-        throw new Error(`Status request failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error getting index status:', error);
-      
-      // Mock status for development
-      return {
-        isBuilt: true,
-        documentCount: 42,
-        lastUpdated: new Date().toISOString(),
-      };
+      console.error('Health check failed:', error);
+      return false;
     }
   }
 
   /**
    * Mock response for development/fallback
    */
-  private getMockResponse(question: string): QueryResponse {
+  private getMockResponse(question: string): ApiResponse {
     const mockSources = [
       {
-        title: "Labour force - underemployment and underutilisation",
-        agency: "ABS",
-        api_url: "nan",
-        similarity: 0.277
+        source: 'Labour force - underemployment and underutilisation',
+        similarity: 0.85,
+        recency_flag: true,
+        preview: 'ABS dataset: Statistics on underutilised persons by Region, Age and Sex.',
       },
       {
-        title: "Labour Force Educational Attendance",
-        agency: "ABS", 
-        api_url: "nan",
-        similarity: 0.24
-      }
-    ];
-
-    const mockHits = [
-      {
-        id: "LF_UNDER",
-        title: "Labour force - underemployment and underutilisation",
-        description: "Statistics on underutilised persons by Region, Age and Sex. Catalogue number: 6202.0, tables 22 to 25.",
-        agency: "ABS",
-        api_url: "nan",
-        similarity_score: 0.277
+        source: 'Labour Force Educational Attendance',
+        similarity: 0.78,
+        recency_flag: true,
+        preview: 'ABS dataset: Employment statistics by education status from the monthly Labour Force Survey.',
       },
-      {
-        id: "LF_EDU",
-        title: "Labour Force Educational Attendance", 
-        description: "Headline estimates of employment, unemployment, underemployment, participation and hours worked from the monthly Labour Force Survey. By education status.",
-        agency: "ABS",
-        api_url: "nan",
-        similarity_score: 0.24
-      }
     ];
 
     return {
-      query: question,
-      answer: `I found ${mockHits.length} datasets related to "${question}". These datasets provide information about labour force statistics and educational attendance which may help with your research.`,
-      sources: mockSources,
-      hits: mockHits,
-      count: mockHits.length
+      answer: `I found several relevant datasets related to "${question}". These include labor force statistics that track underemployment and underutilisation, as well as educational attendance data that shows employment patterns by education level. These datasets can help you explore the relationship between education and employment outcomes.`,
+      audit: {
+        question,
+        trust_score: 77,
+        retrieved: mockSources,
+        timestamp: Date.now(),
+      },
     };
   }
 }

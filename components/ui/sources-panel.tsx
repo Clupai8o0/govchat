@@ -157,9 +157,9 @@ export function SourcesPanel({ sources, className }: SourcesPanelProps) {
         
         <div className="bg-white/[0.02] rounded-lg border border-white/[0.05] p-6 text-center">
           <FileText className="w-8 h-8 text-white/40 mx-auto mb-3" />
-          <p className="text-sm text-white/60">
-            Ask a question to see sources and citations
-          </p>
+                      <p className="text-sm text-white/60">
+              Ask a question to see relevant datasets and sources
+            </p>
         </div>
       </div>
     );
@@ -175,7 +175,7 @@ export function SourcesPanel({ sources, className }: SourcesPanelProps) {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">Sources</h3>
-            <p className="text-sm text-white/60">{sources.length} document{sources.length !== 1 ? 's' : ''}</p>
+            <p className="text-sm text-white/60">{sources.length} dataset{sources.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
       </div>
