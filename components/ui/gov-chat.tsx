@@ -12,7 +12,7 @@ import {
   BarChart3,
   FileSearch,
   Loader,
-  Sparkles,
+  Flower,
   Menu,
   X
 } from 'lucide-react';
@@ -186,7 +186,7 @@ export function GovChat() {
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">
 							<div className="w-10 h-10 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-500 flex items-center justify-center">
-								<Sparkles className="w-6 h-6 text-white" />
+								<Flower className="w-6 h-6 text-white" />
 							</div>
 							<div>
 								<h1 className="text-lg sm:text-xl font-bold text-white">
