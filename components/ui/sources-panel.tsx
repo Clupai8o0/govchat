@@ -284,9 +284,9 @@ export function SourcesPanel({ sources, className }: SourcesPanelProps) {
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-4 h-full", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
             <Database className="w-4 h-4 text-white" />
@@ -298,47 +298,50 @@ export function SourcesPanel({ sources, className }: SourcesPanelProps) {
         </div>
       </div>
 
-      {/* Sources List */}
-      <div className="space-y-3">
-        {displaySources.map((source, index) => (
-          <SourceItem key={`${source.source}-${index}`} source={source} index={index} />
-        ))}
-      </div>
-
-      {/* Show More/Less Button */}
-      {sources.length > 3 && (
-        <motion.button
-          onClick={() => setShowAll(!showAll)}
-          className="w-full py-2 text-sm text-violet-400 hover:text-violet-300 transition-colors border border-white/[0.05] rounded-lg hover:bg-white/[0.02]"
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-        >
-          {showAll ? 'Show Less' : `Show ${sources.length - 3} More`}
-        </motion.button>
-      )}
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-2 gap-3 pt-2">
-        <div className="bg-white/[0.02] rounded-lg p-3 border border-white/[0.05]">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-green-400" />
-            <span className="text-xs text-white/60">Recent</span>
-          </div>
-          <p className="text-lg font-semibold text-white mt-1">
-            {sources.filter(s => s.recency_flag).length}
-          </p>
+      {/* Scrollable content area */}
+      <div className="flex-1 min-h-0 space-y-4">
+        {/* Sources List */}
+        <div className="space-y-3">
+          {displaySources.map((source, index) => (
+            <SourceItem key={`${source.source}-${index}`} source={source} index={index} />
+          ))}
         </div>
-        
-        <div className="bg-white/[0.02] rounded-lg p-3 border border-white/[0.05]">
-          <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-400" />
-            <span className="text-xs text-white/60">Avg. Relevance</span>
+
+        {/* Show More/Less Button */}
+        {sources.length > 3 && (
+          <motion.button
+            onClick={() => setShowAll(!showAll)}
+            className="w-full py-2 text-sm text-violet-400 hover:text-violet-300 transition-colors border border-white/[0.05] rounded-lg hover:bg-white/[0.02]"
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+          >
+            {showAll ? 'Show Less' : `Show ${sources.length - 3} More`}
+          </motion.button>
+        )}
+
+        {/* Summary Stats */}
+        <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="bg-white/[0.02] rounded-lg p-3 border border-white/[0.05]">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4 text-green-400" />
+              <span className="text-xs text-white/60">Recent</span>
+            </div>
+            <p className="text-lg font-semibold text-white mt-1">
+              {sources.filter(s => s.recency_flag).length}
+            </p>
           </div>
-          <p className="text-lg font-semibold text-white mt-1">
-            {sources.length > 0 
-              ? Math.round(sources.reduce((acc, s) => acc + (s.similarity || 0), 0) / sources.length * 100)
-              : 0}%
-          </p>
+          
+          <div className="bg-white/[0.02] rounded-lg p-3 border border-white/[0.05]">
+            <div className="flex items-center gap-2">
+              <FileText className="w-4 h-4 text-blue-400" />
+              <span className="text-xs text-white/60">Avg. Relevance</span>
+            </div>
+            <p className="text-lg font-semibold text-white mt-1">
+              {sources.length > 0 
+                ? Math.round(sources.reduce((acc, s) => acc + (s.similarity || 0), 0) / sources.length * 100)
+                : 0}%
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -200,9 +200,15 @@ export function ChatHistory({
       ref={scrollRef}
       className={cn(
         "relative flex-1 overflow-y-auto space-y-6 p-4 pb-6 scroll-smooth",
-        "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20",
+        "scrollbar-none",
+        // Hide scrollbar for all browsers
+        "[&::-webkit-scrollbar]:hidden [-ms-overflow-style]:none [scrollbar-width]:none",
         className
       )}
+      style={{
+        scrollbarWidth: 'none', // Firefox
+        msOverflowStyle: 'none', // Internet Explorer 10+
+      }}
     >
       <AnimatePresence mode="popLayout">
         {messages.length === 0 ? (

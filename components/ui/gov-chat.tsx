@@ -176,7 +176,7 @@ export function GovChat() {
   }, [setMobileSidebar]);
 
   return (
-		<div className="min-h-screen text-white flex flex-col">
+		<div className="h-screen text-white flex flex-col overflow-hidden">
 			{/* Background Effects */}
 			<div className="absolute inset-0 overflow-hidden pointer-events-none">
 				<div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/15 rounded-full mix-blend-normal filter blur-[128px] animate-pulse" />
@@ -185,7 +185,7 @@ export function GovChat() {
 			</div>
 
 			{/* Header */}
-			<header className="relative z-10 border-b border-white/[0.05] bg-black/10 backdrop-blur-xl w-screen">
+			<header className="relative z-10 border-b border-white/[0.05] bg-black/10 backdrop-blur-xl flex-shrink-0">
 				<div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">
@@ -235,7 +235,7 @@ export function GovChat() {
 			</header>
 
 			{/* Main Content */}
-			<div className="flex-1 flex overflow-hidden relative z-10 w-screen">
+			<div className="flex-1 flex overflow-hidden relative z-10 min-h-0 min-w-screen">
 				{/* Left Panel - Chat */}
 				<div className="flex-1 flex flex-col min-h-0">
 					{/* Chat History - Takes remaining space */}
@@ -249,56 +249,59 @@ export function GovChat() {
 					</div>
 
 					{/* Input Area - Sticky to bottom */}
-					<div className="flex-shrink-0 border-t border-white/[0.05] bg-black/10 backdrop-blur-xl p-4 sm:p-6">
-						<div className="max-w-4xl mx-auto space-y-4">
-							{/* Input */}
-							<div className="relative">
-								<Textarea
-									ref={inputRef}
-									value={inputValue}
-									onChange={(e) => setInputValue(e.target.value)}
-									onKeyDown={handleKeyDown}
-									placeholder="Ask a question about your government data..."
-									containerClassName="w-full"
-									className={cn(
-										"w-full px-4 py-3 pr-12",
-										"resize-none",
-										"bg-white/[0.02] border border-white/[0.1]",
-										"text-white/90 text-sm",
-										"focus:outline-none focus:border-violet-500/50",
-										"placeholder:text-white/40",
-										"min-h-[60px] max-h-[120px]"
-									)}
-									showRing={false}
-								/>
+					<div className="flex-shrink-0 border-t border-white/[0.05] bg-black/10 backdrop-blur-xl pb-4 md:pb-6">
+						{/* Safe area padding for mobile devices */}
+						<div className="p-4 sm:p-6 pb-4 sm:pb-6 safe-area-inset-bottom">
+							<div className="max-w-4xl mx-auto space-y-4">
+								{/* Input */}
+								<div className="relative">
+									<Textarea
+										ref={inputRef}
+										value={inputValue}
+										onChange={(e) => setInputValue(e.target.value)}
+										onKeyDown={handleKeyDown}
+										placeholder="Ask a question about your government data..."
+										containerClassName="w-full"
+										className={cn(
+											"w-full px-4 py-3 pr-12",
+											"resize-none",
+											"bg-white/[0.02] border border-white/[0.1]",
+											"text-white/90 text-sm",
+											"focus:outline-none focus:border-violet-500/50",
+											"placeholder:text-white/40",
+											"min-h-[50px] max-h-[120px]"
+										)}
+										showRing={false}
+									/>
 
-								<motion.button
-									onClick={handleSendMessage}
-									disabled={!inputValue.trim() || isLoading}
-									whileHover={{ scale: 1.05 }}
-									whileTap={{ scale: 0.95 }}
-									className={cn(
-										"absolute right-2 top-2 w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-										inputValue.trim() && !isLoading
-											? "bg-violet-500 text-white hover:bg-violet-600"
-											: "bg-white/[0.05] text-white/40"
-									)}
-								>
-									{isLoading ? (
-										<Loader className="w-4 h-4 animate-spin" />
-									) : (
-										<Send className="w-4 h-4" />
-									)}
-								</motion.button>
+									<motion.button
+										onClick={handleSendMessage}
+										disabled={!inputValue.trim() || isLoading}
+										whileHover={{ scale: 1.05 }}
+										whileTap={{ scale: 0.95 }}
+										className={cn(
+											"absolute right-2 top-2 w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+											inputValue.trim() && !isLoading
+												? "bg-violet-500 text-white hover:bg-violet-600"
+												: "bg-white/[0.05] text-white/40"
+										)}
+									>
+										{isLoading ? (
+											<Loader className="w-4 h-4 animate-spin" />
+										) : (
+											<Send className="w-4 h-4" />
+										)}
+									</motion.button>
+								</div>
 							</div>
 						</div>
 					</div>
 				</div>
 
 				{/* Desktop Right Panel - Tabs */}
-				<div className="hidden lg:flex w-96 border-l border-white/[0.05] bg-black/10 backdrop-blur-xl flex-col">
+				<div className="hidden lg:flex w-96 border-l border-white/[0.05] bg-black/10 backdrop-blur-xl flex-col min-h-0">
 					{/* Tab Navigation */}
-					<div className="border-b border-white/[0.05] p-4">
+					<div className="border-b border-white/[0.05] p-4 flex-shrink-0">
 						<div className="grid grid-cols-3 gap-1 bg-white/[0.02] p-1 rounded-lg">
 							<TabButton
 								id="trust"
@@ -325,65 +328,67 @@ export function GovChat() {
 						</div>
 					</div>
 
-					{/* Tab Content */}
-					<div className="flex-1 overflow-y-auto p-4">
-						<AnimatePresence mode="wait">
-							{activeTab === "trust" && (
-								<motion.div
-									key="trust"
-									initial={{ opacity: 0, x: 20 }}
-									animate={{ opacity: 1, x: 0 }}
-									exit={{ opacity: 0, x: -20 }}
-									transition={{ duration: 0.3 }}
-								>
-									{latestMessage ? (
-										<TrustMeter
-											score={latestMessage.audit.trust_score}
-											factors={latestMessage.audit.trust_factors}
-											auditId={latestMessage.audit.audit_id}
-											retrievedCount={latestMessage.audit.retrieved.length}
-											maxSimilarity={Math.max(...latestMessage.audit.retrieved.map(r => r.similarity || 0))}
+					{/* Tab Content - Scrollable */}
+					<div className="flex-1 min-h-0 relative">
+						<div className="absolute inset-0 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style]:none [scrollbar-width]:none p-4">
+							<AnimatePresence mode="wait">
+								{activeTab === "trust" && (
+									<motion.div
+										key="trust"
+										initial={{ opacity: 0, x: 20 }}
+										animate={{ opacity: 1, x: 0 }}
+										exit={{ opacity: 0, x: -20 }}
+										transition={{ duration: 0.3 }}
+									>
+										{latestMessage ? (
+											<TrustMeter
+												score={latestMessage.audit.trust_score}
+												factors={latestMessage.audit.trust_factors}
+												auditId={latestMessage.audit.audit_id}
+												retrievedCount={latestMessage.audit.retrieved.length}
+												maxSimilarity={Math.max(...latestMessage.audit.retrieved.map(r => r.similarity || 0))}
+											/>
+										) : (
+											<div className="text-center py-12">
+												<BarChart3 className="w-12 h-12 text-white/40 mx-auto mb-4" />
+												<p className="text-white/60">
+													Ask a question to see trust metrics
+												</p>
+											</div>
+										)}
+									</motion.div>
+								)}
+
+								{activeTab === "sources" && (
+									<motion.div
+										key="sources"
+										initial={{ opacity: 0, x: 20 }}
+										animate={{ opacity: 1, x: 0 }}
+										exit={{ opacity: 0, x: -20 }}
+										transition={{ duration: 0.3 }}
+									>
+										<SourcesPanel
+											sources={latestMessage?.audit.retrieved || []}
 										/>
-									) : (
-										<div className="text-center py-12">
-											<BarChart3 className="w-12 h-12 text-white/40 mx-auto mb-4" />
-											<p className="text-white/60">
-												Ask a question to see trust metrics
-											</p>
-										</div>
-									)}
-								</motion.div>
-							)}
+									</motion.div>
+								)}
 
-							{activeTab === "sources" && (
-								<motion.div
-									key="sources"
-									initial={{ opacity: 0, x: 20 }}
-									animate={{ opacity: 1, x: 0 }}
-									exit={{ opacity: 0, x: -20 }}
-									transition={{ duration: 0.3 }}
-								>
-									<SourcesPanel
-										sources={latestMessage?.audit.retrieved || []}
-									/>
-								</motion.div>
-							)}
-
-							{activeTab === "suggestions" && (
-								<motion.div
-									key="suggestions"
-									initial={{ opacity: 0, x: 20 }}
-									animate={{ opacity: 1, x: 0 }}
-									exit={{ opacity: 0, x: -20 }}
-									transition={{ duration: 0.3 }}
-								>
-									<SmartSuggestions
-										latestSources={latestMessage?.audit.retrieved || []}
-										onSuggestionClick={handleSuggestionClick}
-									/>
-								</motion.div>
-							)}
-						</AnimatePresence>
+								{activeTab === "suggestions" && (
+									<motion.div
+										key="suggestions"
+										initial={{ opacity: 0, x: 20 }}
+										animate={{ opacity: 1, x: 0 }}
+										exit={{ opacity: 0, x: -20 }}
+										transition={{ duration: 0.3 }}
+									>
+										<SmartSuggestions
+											latestSources={latestMessage?.audit.retrieved || []}
+											onSuggestionClick={handleSuggestionClick}
+										/>
+									</motion.div>
+								)}
+							</AnimatePresence>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -451,65 +456,67 @@ export function GovChat() {
 								</div>
 							</div>
 
-							{/* Mobile Tab Content */}
-							<div className="flex-1 overflow-y-auto p-4">
-								<AnimatePresence mode="wait">
-									{activeTab === "trust" && (
-										<motion.div
-											key="trust-mobile"
-											initial={{ opacity: 0, x: 20 }}
-											animate={{ opacity: 1, x: 0 }}
-											exit={{ opacity: 0, x: -20 }}
-											transition={{ duration: 0.3 }}
-										>
-											{latestMessage ? (
-												<TrustMeter
-													score={latestMessage.audit.trust_score}
-													factors={latestMessage.audit.trust_factors}
-													auditId={latestMessage.audit.audit_id}
-													retrievedCount={latestMessage.audit.retrieved.length}
-													maxSimilarity={Math.max(...latestMessage.audit.retrieved.map(r => r.similarity || 0))}
+							{/* Mobile Tab Content - Scrollable */}
+							<div className="flex-1 min-h-0 relative">
+								<div className="absolute inset-0 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style]:none [scrollbar-width]:none p-4">
+									<AnimatePresence mode="wait">
+										{activeTab === "trust" && (
+											<motion.div
+												key="trust-mobile"
+												initial={{ opacity: 0, x: 20 }}
+												animate={{ opacity: 1, x: 0 }}
+												exit={{ opacity: 0, x: -20 }}
+												transition={{ duration: 0.3 }}
+											>
+												{latestMessage ? (
+													<TrustMeter
+														score={latestMessage.audit.trust_score}
+														factors={latestMessage.audit.trust_factors}
+														auditId={latestMessage.audit.audit_id}
+														retrievedCount={latestMessage.audit.retrieved.length}
+														maxSimilarity={Math.max(...latestMessage.audit.retrieved.map(r => r.similarity || 0))}
+													/>
+												) : (
+													<div className="text-center py-12">
+														<BarChart3 className="w-12 h-12 text-white/40 mx-auto mb-4" />
+														<p className="text-white/60">
+															Ask a question to see trust metrics
+														</p>
+													</div>
+												)}
+											</motion.div>
+										)}
+
+										{activeTab === "sources" && (
+											<motion.div
+												key="sources-mobile"
+												initial={{ opacity: 0, x: 20 }}
+												animate={{ opacity: 1, x: 0 }}
+												exit={{ opacity: 0, x: -20 }}
+												transition={{ duration: 0.3 }}
+											>
+												<SourcesPanel
+													sources={latestMessage?.audit.retrieved || []}
 												/>
-											) : (
-												<div className="text-center py-12">
-													<BarChart3 className="w-12 h-12 text-white/40 mx-auto mb-4" />
-													<p className="text-white/60">
-														Ask a question to see trust metrics
-													</p>
-												</div>
-											)}
-										</motion.div>
-									)}
+											</motion.div>
+										)}
 
-									{activeTab === "sources" && (
-										<motion.div
-											key="sources-mobile"
-											initial={{ opacity: 0, x: 20 }}
-											animate={{ opacity: 1, x: 0 }}
-											exit={{ opacity: 0, x: -20 }}
-											transition={{ duration: 0.3 }}
-										>
-											<SourcesPanel
-												sources={latestMessage?.audit.retrieved || []}
-											/>
-										</motion.div>
-									)}
-
-									{activeTab === "suggestions" && (
-										<motion.div
-											key="suggestions-mobile"
-											initial={{ opacity: 0, x: 20 }}
-											animate={{ opacity: 1, x: 0 }}
-											exit={{ opacity: 0, x: -20 }}
-											transition={{ duration: 0.3 }}
-										>
-											<SmartSuggestions
-												latestSources={latestMessage?.audit.retrieved || []}
-												onSuggestionClick={handleSuggestionClick}
-											/>
-										</motion.div>
-									)}
-								</AnimatePresence>
+										{activeTab === "suggestions" && (
+											<motion.div
+												key="suggestions-mobile"
+												initial={{ opacity: 0, x: 20 }}
+												animate={{ opacity: 1, x: 0 }}
+												exit={{ opacity: 0, x: -20 }}
+												transition={{ duration: 0.3 }}
+											>
+												<SmartSuggestions
+													latestSources={latestMessage?.audit.retrieved || []}
+													onSuggestionClick={handleSuggestionClick}
+												/>
+											</motion.div>
+										)}
+									</AnimatePresence>
+								</div>
 							</div>
 						</motion.div>
 					</>

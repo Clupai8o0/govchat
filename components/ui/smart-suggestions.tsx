@@ -191,9 +191,9 @@ export function SmartSuggestions({
   }
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-4 h-full flex flex-col", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
             <Lightbulb className="w-4 h-4 text-white" />
@@ -215,7 +215,7 @@ export function SmartSuggestions({
       </div>
 
       {/* Quick Search Bar */}
-      <div className="bg-white/[0.02] rounded-lg border border-white/[0.05] p-3">
+      <div className="bg-white/[0.02] rounded-lg border border-white/[0.05] p-3 flex-shrink-0">
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
           <Search className="w-4 h-4 text-white/60 flex-shrink-0" />
           <input
@@ -239,44 +239,47 @@ export function SmartSuggestions({
         </form>
       </div>
 
-      {/* Loading State */}
-      {isLoading && (
-        <div className="flex items-center justify-center py-8">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          >
-            <Loader className="w-6 h-6 text-violet-400" />
-          </motion.div>
-          <span className="ml-3 text-sm text-white/60">Finding similar datasets...</span>
-        </div>
-      )}
+      {/* Scrollable content area */}
+      <div className="flex-1 min-h-0">
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex items-center justify-center py-8">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            >
+              <Loader className="w-6 h-6 text-violet-400" />
+            </motion.div>
+            <span className="ml-3 text-sm text-white/60">Finding similar datasets...</span>
+          </div>
+        )}
 
-      {/* Suggestions List */}
-      {!isLoading && suggestions.length > 0 && (
-        <div className="space-y-2">
-          <AnimatePresence>
-            {suggestions.map((dataset, index) => (
-              <SuggestionItem
-                key={dataset.id}
-                dataset={dataset}
-                index={index}
-                onSuggestionClick={onSuggestionClick}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
-      )}
+        {/* Suggestions List */}
+        {!isLoading && suggestions.length > 0 && (
+          <div className="space-y-2">
+            <AnimatePresence>
+              {suggestions.map((dataset, index) => (
+                <SuggestionItem
+                  key={dataset.id}
+                  dataset={dataset}
+                  index={index}
+                  onSuggestionClick={onSuggestionClick}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
 
-      {/* No suggestions state */}
-      {!isLoading && suggestions.length === 0 && latestSources.length > 0 && (
-        <div className="bg-white/[0.02] rounded-lg border border-white/[0.05] p-4 text-center">
-          <Database className="w-8 h-8 text-white/40 mx-auto mb-3" />
-          <p className="text-sm text-white/60">
-            No similar datasets found for the current results
-          </p>
-        </div>
-      )}
+        {/* No suggestions state */}
+        {!isLoading && suggestions.length === 0 && latestSources.length > 0 && (
+          <div className="bg-white/[0.02] rounded-lg border border-white/[0.05] p-4 text-center">
+            <Database className="w-8 h-8 text-white/40 mx-auto mb-3" />
+            <p className="text-sm text-white/60">
+              No similar datasets found for the current results
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
