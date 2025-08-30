@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, 
@@ -12,7 +12,9 @@ import {
   BarChart3,
   FileSearch,
   Loader,
-  Sparkles
+  Sparkles,
+  Menu,
+  X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChat } from '@/contexts/chat-context';
@@ -65,12 +67,15 @@ export function GovChat() {
     settings,
     uploadedFiles,
     isIndexing,
+    isMobileSidebarOpen,
     addMessage,
     setLoading,
     addFile,
     updateFile,
     removeFile,
     setIndexing,
+    toggleMobileSidebar,
+    setMobileSidebar,
   } = useChat();
 
   const [inputValue, setInputValue] = useState('');
@@ -97,16 +102,21 @@ export function GovChat() {
 
       addMessage(newMessage);
       
-      // Auto-switch to trust meter tab if not on chat
+      // Auto-switch to sources tab if not already there
       if (activeTab !== 'sources') {
         setActiveTab('sources');
+      }
+      
+      // Close mobile sidebar after sending message (mobile UX improvement)
+      if (isMobileSidebarOpen) {
+        setMobileSidebar(false);
       }
     } catch (error) {
       console.error('Error sending message:', error);
     } finally {
       setLoading(false);
     }
-  }, [inputValue, isLoading, settings, addMessage, setLoading, activeTab]);
+  }, [inputValue, isLoading, settings, addMessage, setLoading, activeTab, isMobileSidebarOpen, setMobileSidebar]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -116,6 +126,45 @@ export function GovChat() {
   };
 
   const latestMessage = messages[messages.length - 1];
+
+  // Close mobile sidebar on escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileSidebarOpen) {
+        setMobileSidebar(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isMobileSidebarOpen, setMobileSidebar]);
+
+  // Handle swipe to close
+  const handleSwipeStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const startX = touch.clientX;
+    
+    const handleSwipeMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      const currentX = touch.clientX;
+      const diffX = currentX - startX;
+      
+      // If swiped right by more than 100px, close the sidebar
+      if (diffX > 100) {
+        setMobileSidebar(false);
+        document.removeEventListener('touchmove', handleSwipeMove);
+        document.removeEventListener('touchend', handleSwipeEnd);
+      }
+    };
+    
+    const handleSwipeEnd = () => {
+      document.removeEventListener('touchmove', handleSwipeMove);
+      document.removeEventListener('touchend', handleSwipeEnd);
+    };
+    
+    document.addEventListener('touchmove', handleSwipeMove);
+    document.addEventListener('touchend', handleSwipeEnd);
+  }, [setMobileSidebar]);
 
   return (
 		<div className="min-h-screen text-white flex flex-col">
@@ -128,24 +177,47 @@ export function GovChat() {
 
 			{/* Header */}
 			<header className="relative z-10 border-b border-white/[0.05] bg-black/10 backdrop-blur-xl w-screen">
-				<div className="max-w-7xl mx-auto px-6 py-4">
+				<div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center gap-3">
 							<div className="w-10 h-10 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-500 flex items-center justify-center">
 								<Sparkles className="w-6 h-6 text-white" />
 							</div>
 							<div>
-								<h1 className="text-xl font-bold text-white">GovChat</h1>
-								<p className="text-sm text-white/60">
+								<h1 className="text-lg sm:text-xl font-bold text-white">GovChat</h1>
+								<p className="text-xs sm:text-sm text-white/60 hidden xs:block">
 									AI Assistant with RAG, Citations & Audit
 								</p>
 							</div>
 						</div>
 
-						<div className="flex items-center gap-2">
-							<div className="text-sm text-white/60">
+						<div className="flex items-center gap-4">
+							<div className="text-sm text-white/60 hidden sm:block">
 								{messages.length} conversation{messages.length !== 1 ? "s" : ""}
 							</div>
+							
+							{/* Mobile Menu Button */}
+							<motion.button
+								onClick={toggleMobileSidebar}
+								whileHover={{ scale: 1.02 }}
+								whileTap={{ scale: 0.98 }}
+								className="lg:hidden relative flex items-center justify-center w-10 h-10 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.1] transition-colors"
+							>
+								{isMobileSidebarOpen ? (
+									<X className="w-5 h-5 text-white" />
+								) : (
+									<Menu className="w-5 h-5 text-white" />
+								)}
+								
+								{/* Show badge when data is available */}
+								{!isMobileSidebarOpen && latestMessage && (
+									<motion.span
+										initial={{ scale: 0, opacity: 0 }}
+										animate={{ scale: 1, opacity: 1 }}
+										className="absolute -top-1 -right-1 w-3 h-3 bg-violet-500 rounded-full"
+									/>
+								)}
+							</motion.button>
 						</div>
 					</div>
 				</div>
@@ -164,7 +236,7 @@ export function GovChat() {
 					/>
 
 					{/* Input Area */}
-					<div className="border-t border-white/[0.05] bg-black/10 backdrop-blur-xl p-6">
+					<div className="border-t border-white/[0.05] bg-black/10 backdrop-blur-xl p-4 sm:p-6">
 						<div className="max-w-4xl mx-auto space-y-4">
 							{/* Input */}
 							<div className="relative">
@@ -209,8 +281,8 @@ export function GovChat() {
 					</div>
 				</div>
 
-				{/* Right Panel - Tabs */}
-				<div className="w-96 border-l border-white/[0.05] bg-black/10 backdrop-blur-xl flex flex-col">
+				{/* Desktop Right Panel - Tabs */}
+				<div className="hidden lg:flex w-96 border-l border-white/[0.05] bg-black/10 backdrop-blur-xl flex-col">
 					{/* Tab Navigation */}
 					<div className="border-b border-white/[0.05] p-4">
 						<div className="grid grid-cols-2 gap-1 bg-white/[0.02] p-1 rounded-lg">
@@ -276,6 +348,131 @@ export function GovChat() {
 					</div>
 				</div>
 			</div>
+
+			{/* Mobile Sidebar Overlay */}
+			<AnimatePresence>
+				{isMobileSidebarOpen && (
+					<>
+						{/* Backdrop */}
+						<motion.div
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							onClick={() => setMobileSidebar(false)}
+							className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+						/>
+						
+						{/* Sidebar */}
+						<motion.div
+							initial={{ x: '100%' }}
+							animate={{ x: 0 }}
+							exit={{ x: '100%' }}
+							transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+							onTouchStart={handleSwipeStart}
+							className="fixed top-0 right-0 bottom-0 w-80 max-w-[90vw] sm:max-w-[85vw] bg-black/95 backdrop-blur-xl border-l border-white/[0.1] z-50 lg:hidden flex flex-col"
+						>
+							{/* Mobile Sidebar Header */}
+							<div className="flex items-center justify-between p-4 border-b border-white/[0.05]">
+								<h2 className="text-lg font-semibold text-white">Details</h2>
+								<motion.button
+									onClick={() => setMobileSidebar(false)}
+									whileHover={{ scale: 1.05 }}
+									whileTap={{ scale: 0.95 }}
+									className="w-8 h-8 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] flex items-center justify-center transition-colors"
+								>
+									<X className="w-4 h-4 text-white" />
+								</motion.button>
+							</div>
+
+							{/* Mobile Tab Navigation */}
+							<div className="border-b border-white/[0.05] p-4">
+								<div className="grid grid-cols-2 gap-1 bg-white/[0.02] p-1 rounded-lg">
+									<TabButton
+										id="trust"
+										label="Trust"
+										icon={<BarChart3 className="w-4 h-4" />}
+										isActive={activeTab === "trust"}
+										onClick={setActiveTab}
+									/>
+									<TabButton
+										id="sources"
+										label="Sources"
+										icon={<FileSearch className="w-4 h-4" />}
+										isActive={activeTab === "sources"}
+										onClick={setActiveTab}
+										badge={latestMessage?.audit.retrieved.length}
+									/>
+								</div>
+							</div>
+
+							{/* Mobile Tab Content */}
+							<div className="flex-1 overflow-y-auto p-4">
+								<AnimatePresence mode="wait">
+									{activeTab === "trust" && (
+										<motion.div
+											key="trust-mobile"
+											initial={{ opacity: 0, x: 20 }}
+											animate={{ opacity: 1, x: 0 }}
+											exit={{ opacity: 0, x: -20 }}
+											transition={{ duration: 0.3 }}
+										>
+											{latestMessage ? (
+												<TrustMeter
+													score={latestMessage.audit.trust_score}
+													heuristic="embeddings similarity, number of distinct sources, recency flag"
+												/>
+											) : (
+												<div className="text-center py-12">
+													<BarChart3 className="w-12 h-12 text-white/40 mx-auto mb-4" />
+													<p className="text-white/60">
+														Ask a question to see trust metrics
+													</p>
+												</div>
+											)}
+										</motion.div>
+									)}
+
+									{activeTab === "sources" && (
+										<motion.div
+											key="sources-mobile"
+											initial={{ opacity: 0, x: 20 }}
+											animate={{ opacity: 1, x: 0 }}
+											exit={{ opacity: 0, x: -20 }}
+											transition={{ duration: 0.3 }}
+										>
+											<SourcesPanel
+												sources={latestMessage?.audit.retrieved || []}
+											/>
+										</motion.div>
+									)}
+								</AnimatePresence>
+							</div>
+						</motion.div>
+					</>
+				)}
+			</AnimatePresence>
+
+			{/* Mobile Floating Action Button - only show when there's data and sidebar is closed */}
+			<AnimatePresence>
+				{!isMobileSidebarOpen && latestMessage && (
+					<motion.button
+						initial={{ scale: 0, opacity: 0 }}
+						animate={{ scale: 1, opacity: 1 }}
+						exit={{ scale: 0, opacity: 0 }}
+						onClick={toggleMobileSidebar}
+						whileHover={{ scale: 1.1 }}
+						whileTap={{ scale: 0.9 }}
+						className="fixed bottom-6 right-6 lg:hidden w-14 h-14 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-full shadow-lg flex items-center justify-center z-30"
+					>
+						<FileSearch className="w-6 h-6 text-white" />
+						{latestMessage.audit.retrieved.length > 0 && (
+							<span className="absolute -top-2 -right-2 w-6 h-6 bg-white text-violet-600 text-xs rounded-full flex items-center justify-center font-bold">
+								{latestMessage.audit.retrieved.length > 9 ? '9+' : latestMessage.audit.retrieved.length}
+							</span>
+						)}
+					</motion.button>
+				)}
+			</AnimatePresence>
 
 			{/* Audit Modal */}
 			<AnimatePresence>

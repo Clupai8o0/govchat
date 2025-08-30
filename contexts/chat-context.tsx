@@ -9,6 +9,7 @@ interface ChatState {
   settings: ChatSettings;
   uploadedFiles: UploadedFile[];
   isIndexing: boolean;
+  isMobileSidebarOpen: boolean;
 }
 
 type ChatAction = 
@@ -19,7 +20,9 @@ type ChatAction =
   | { type: 'UPDATE_FILE'; payload: { id: string; updates: Partial<UploadedFile> } }
   | { type: 'REMOVE_FILE'; payload: string }
   | { type: 'SET_INDEXING'; payload: boolean }
-  | { type: 'CLEAR_MESSAGES' };
+  | { type: 'CLEAR_MESSAGES' }
+  | { type: 'TOGGLE_MOBILE_SIDEBAR' }
+  | { type: 'SET_MOBILE_SIDEBAR'; payload: boolean };
 
 const initialSettings: ChatSettings = {
   useOpenAI: true,
@@ -36,6 +39,7 @@ const initialState: ChatState = {
   settings: initialSettings,
   uploadedFiles: [],
   isIndexing: false,
+  isMobileSidebarOpen: false,
 };
 
 function chatReducer(state: ChatState, action: ChatAction): ChatState {
@@ -84,6 +88,16 @@ function chatReducer(state: ChatState, action: ChatAction): ChatState {
         ...state,
         messages: [],
       };
+    case 'TOGGLE_MOBILE_SIDEBAR':
+      return {
+        ...state,
+        isMobileSidebarOpen: !state.isMobileSidebarOpen,
+      };
+    case 'SET_MOBILE_SIDEBAR':
+      return {
+        ...state,
+        isMobileSidebarOpen: action.payload,
+      };
     default:
       return state;
   }
@@ -98,6 +112,8 @@ interface ChatContextType extends ChatState {
   removeFile: (id: string) => void;
   setIndexing: (indexing: boolean) => void;
   clearMessages: () => void;
+  toggleMobileSidebar: () => void;
+  setMobileSidebar: (open: boolean) => void;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -137,6 +153,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'CLEAR_MESSAGES' });
   }, []);
 
+  const toggleMobileSidebar = useCallback(() => {
+    dispatch({ type: 'TOGGLE_MOBILE_SIDEBAR' });
+  }, []);
+
+  const setMobileSidebar = useCallback((open: boolean) => {
+    dispatch({ type: 'SET_MOBILE_SIDEBAR', payload: open });
+  }, []);
+
   const value: ChatContextType = {
     ...state,
     addMessage,
@@ -147,6 +171,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     removeFile,
     setIndexing,
     clearMessages,
+    toggleMobileSidebar,
+    setMobileSidebar,
   };
 
   return (
