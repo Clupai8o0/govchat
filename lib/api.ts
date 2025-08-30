@@ -23,8 +23,10 @@ class ChatAPI {
           'Content-Type': 'application/json',
         },
       });
+      console.log("sent")
 
       if (!response.ok) {
+        console.log("failed")
         throw new Error(`API request failed: ${response.statusText}`);
       }
 
@@ -37,7 +39,6 @@ class ChatAPI {
       return this.transformQueryResponse(data);
     } catch (error) {
       console.error('Error asking question:', error);
-      
       // Fallback mock response for development
       return this.getMockResponse(question);
     }
@@ -47,12 +48,16 @@ class ChatAPI {
    * Transform the new API response format to the legacy format expected by the UI
    */
   private transformQueryResponse(queryResponse: QueryResponse): ApiResponse {
-    // Convert sources to retrieved format
-    const retrieved = queryResponse.sources.map(source => ({
-      source: source.title,
-      similarity: source.similarity,
+    // Convert hits to retrieved format with enhanced data
+    const retrieved = queryResponse.hits.map(hit => ({
+      source: hit.title,
+      similarity: hit.similarity_score,
       recency_flag: true, // Default to true for now
-      preview: `${source.agency} dataset: ${source.title}`,
+      preview: hit.description,
+      // Add additional data for enhanced display
+      id: hit.id,
+      agency: hit.agency,
+      api_url: hit.api_url,
     }));
 
     // Convert trust score from 0-1 to 0-100 scale

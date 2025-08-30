@@ -18,6 +18,10 @@ export interface RetrievedSource {
   similarity: number | null;
   recency_flag: boolean;
   preview: string | null;
+  // Enhanced data for dataset display
+  id?: string;
+  agency?: string;
+  api_url?: string;
 }
 
 // Types for the new API response structure

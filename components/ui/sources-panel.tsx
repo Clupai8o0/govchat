@@ -9,7 +9,9 @@ import {
   ChevronDown, 
   ChevronRight,
   ExternalLink,
-  Clock
+  Clock,
+  Download,
+  Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RetrievedSource } from '@/lib/types';
@@ -26,6 +28,7 @@ interface SourceItemProps {
 
 function SourceItem({ source, index }: SourceItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   
   const filename = source.source.split('/').pop() || source.source;
   const similarity = source.similarity ? Math.round(source.similarity * 100) : 0;
@@ -37,6 +40,54 @@ function SourceItem({ source, index }: SourceItemProps) {
     return 'text-red-400';
   };
 
+  const getSimilarityBgColor = (sim: number) => {
+    if (sim >= 80) return 'bg-green-400/10 border-green-400/20';
+    if (sim >= 60) return 'bg-yellow-400/10 border-yellow-400/20';
+    if (sim >= 40) return 'bg-orange-400/10 border-orange-400/20';
+    return 'bg-red-400/10 border-red-400/20';
+  };
+
+  const handleDownloadCsv = async () => {
+    if (!source.id) return;
+    
+    setIsDownloading(true);
+    try {
+      const url = `http://data.api.abs.gov.au/data/${source.id}`;
+      
+      // Try direct download first
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'text/csv'
+        },
+        mode: 'cors'
+      });
+      
+      if (response.ok) {
+        const csvData = await response.text();
+        const blob = new Blob([csvData], { type: 'text/csv' });
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${source.id}_${source.source.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      } else {
+        // Open in new tab if direct download fails
+        window.open(url, '_blank');
+      }
+    } catch (error) {
+      console.error('Error downloading CSV (likely CORS):', error);
+      // CORS fallback: open in new tab where browser can handle the download
+      if (source.id) {
+        window.open(`http://data.api.abs.gov.au/data/${source.id}`, '_blank');
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -44,62 +95,90 @@ function SourceItem({ source, index }: SourceItemProps) {
       transition={{ delay: index * 0.1 }}
       className="bg-white/[0.02] rounded-lg border border-white/[0.05] overflow-hidden"
     >
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full p-4 text-left hover:bg-white/[0.02] transition-colors"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            <FileText className="w-4 h-4 text-white/60 flex-shrink-0" />
+      {/* Header Section - Always Visible */}
+      <div className="p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <Database className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-white truncate">
-                  {filename}
-                </span>
-                <div className="flex items-center gap-1">
-                  {source.recency_flag ? (
-                    <CheckCircle className="w-3 h-3 text-green-400" />
-                  ) : (
-                    <AlertTriangle className="w-3 h-3 text-yellow-400" />
-                  )}
-                  <span className="text-xs text-white/60">
-                    {source.recency_flag ? 'Recent' : 'Older'}
-                  </span>
-                </div>
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h4 className="text-sm font-medium text-white leading-tight">
+                  {source.source}
+                </h4>
+                {source.similarity !== null && (
+                  <div className={cn(
+                    "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border flex-shrink-0",
+                    getSimilarityBgColor(similarity),
+                    getSimilarityColor(similarity)
+                  )}>
+                    <span>{similarity}%</span>
+                  </div>
+                )}
               </div>
               
-              {source.similarity !== null && (
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-white/60">Relevance:</span>
-                  <span className={cn("text-xs font-medium", getSimilarityColor(similarity))}>
-                    {similarity}%
-                  </span>
-                  <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      className={cn(
-                        "h-full",
-                        similarity >= 80 ? "bg-green-400" :
-                        similarity >= 60 ? "bg-yellow-400" :
-                        similarity >= 40 ? "bg-orange-400" : "bg-red-400"
-                      )}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${similarity}%` }}
-                      transition={{ duration: 0.8, delay: index * 0.1 }}
-                    />
-                  </div>
+              {source.agency && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-xs text-white/60">Agency:</span>
+                  <span className="text-xs text-blue-400 font-medium">{source.agency}</span>
+                  {source.id && (
+                    <span className="text-xs text-white/40">({source.id})</span>
+                  )}
                 </div>
               )}
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 mt-3">
+                {source.id && (
+                  <motion.button
+                    onClick={handleDownloadCsv}
+                    disabled={isDownloading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={cn(
+                      "flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors",
+                      isDownloading 
+                        ? "bg-white/[0.05] text-white/40 cursor-not-allowed"
+                        : "bg-violet-500/20 text-violet-300 hover:bg-violet-500/30 border border-violet-500/30"
+                    )}
+                  >
+                    {isDownloading ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        >
+                          <Download className="w-3 h-3" />
+                        </motion.div>
+                        <span>Downloading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-3 h-3" />
+                        <span>Download CSV</span>
+                      </>
+                    )}
+                  </motion.button>
+                )}
+                
+                <motion.button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium bg-white/[0.05] text-white/70 hover:bg-white/[0.1] border border-white/[0.1] transition-colors"
+                >
+                  <span>{isExpanded ? 'Less' : 'More'} Details</span>
+                  <motion.div
+                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown className="w-3 h-3" />
+                  </motion.div>
+                </motion.button>
+              </div>
             </div>
           </div>
-          
-          <motion.div
-            animate={{ rotate: isExpanded ? 90 : 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <ChevronRight className="w-4 h-4 text-white/60" />
-          </motion.div>
         </div>
-      </button>
+      </div>
 
       <AnimatePresence>
         {isExpanded && (
@@ -110,28 +189,67 @@ function SourceItem({ source, index }: SourceItemProps) {
             transition={{ duration: 0.3 }}
             className="border-t border-white/[0.05]"
           >
-            <div className="p-4 space-y-3">
+            <div className="p-4 pt-0 space-y-3">
               {source.preview && (
                 <div>
-                  <h4 className="text-xs font-medium text-white/80 mb-2">Preview</h4>
+                  <h4 className="text-xs font-medium text-white/80 mb-2 flex items-center gap-1">
+                    <FileText className="w-3 h-3" />
+                    Description
+                  </h4>
                   <p className="text-xs text-white/60 leading-relaxed bg-white/[0.02] p-3 rounded border border-white/[0.05]">
                     {source.preview}
                   </p>
                 </div>
               )}
               
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-3 h-3 text-white/40" />
-                  <span className="text-xs text-white/60">
-                    Status: {source.recency_flag ? 'Recently updated' : 'Older content'}
-                  </span>
-                </div>
+              <div className="grid grid-cols-1 gap-3">
+                {source.similarity !== null && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-white/60">Similarity Score:</span>
+                    <div className="flex items-center gap-2">
+                      <div className="w-16 h-1 bg-white/10 rounded-full overflow-hidden">
+                        <motion.div
+                          className={cn(
+                            "h-full",
+                            similarity >= 80 ? "bg-green-400" :
+                            similarity >= 60 ? "bg-yellow-400" :
+                            similarity >= 40 ? "bg-orange-400" : "bg-red-400"
+                          )}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${similarity}%` }}
+                          transition={{ duration: 0.8, delay: index * 0.1 + 0.3 }}
+                        />
+                      </div>
+                      <span className={cn("text-xs font-medium", getSimilarityColor(similarity))}>
+                        {(source.similarity * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                )}
                 
-                <button className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors">
-                  <ExternalLink className="w-3 h-3" />
-                  View source
-                </button>
+                {source.id && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-white/60">Dataset URL:</span>
+                    <a
+                      href={`http://data.api.abs.gov.au/data/${source.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                    >
+                      <span className="font-mono">{source.id}</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-3 h-3 text-white/40" />
+                    <span className="text-xs text-white/60">
+                      Status: {source.recency_flag ? 'Recently updated' : 'Older content'}
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           </motion.div>
@@ -142,7 +260,7 @@ function SourceItem({ source, index }: SourceItemProps) {
 }
 
 export function SourcesPanel({ sources, className }: SourcesPanelProps) {
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(true);
   const displaySources = showAll ? sources : sources.slice(0, 3);
   
   if (sources.length === 0) {
@@ -150,9 +268,9 @@ export function SourcesPanel({ sources, className }: SourcesPanelProps) {
       <div className={cn("space-y-4", className)}>
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
-            <FileText className="w-4 h-4 text-white" />
+            <Database className="w-4 h-4 text-white" />
           </div>
-          <h3 className="text-lg font-semibold text-white">Sources</h3>
+          <h3 className="text-lg font-semibold text-white">Statistical Datasets</h3>
         </div>
         
         <div className="bg-white/[0.02] rounded-lg border border-white/[0.05] p-6 text-center">
@@ -171,11 +289,11 @@ export function SourcesPanel({ sources, className }: SourcesPanelProps) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 flex items-center justify-center">
-            <FileText className="w-4 h-4 text-white" />
+            <Database className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Sources</h3>
-            <p className="text-sm text-white/60">{sources.length} dataset{sources.length !== 1 ? 's' : ''}</p>
+            <h3 className="text-lg font-semibold text-white">Statistical Datasets</h3>
+            <p className="text-sm text-white/60">{sources.length} dataset{sources.length !== 1 ? 's' : ''} found</p>
           </div>
         </div>
       </div>

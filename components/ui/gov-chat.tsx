@@ -299,7 +299,7 @@ export function GovChat() {
 							/>
 							<TabButton
 								id="sources"
-								label="Sources"
+								label="Datasets"
 								icon={<FileSearch className="w-4 h-4" />}
 								isActive={activeTab === "sources"}
 								onClick={setActiveTab}
@@ -400,7 +400,7 @@ export function GovChat() {
 									/>
 									<TabButton
 										id="sources"
-										label="Sources"
+										label="Datasets"
 										icon={<FileSearch className="w-4 h-4" />}
 										isActive={activeTab === "sources"}
 										onClick={setActiveTab}
