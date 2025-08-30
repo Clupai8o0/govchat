@@ -85,7 +85,7 @@ interface TextareaProps
   showRing?: boolean;
 }
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, containerClassName, showRing = true, ...props }, ref) => {
     const [isFocused, setIsFocused] = React.useState(false);
     

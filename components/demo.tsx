@@ -1,9 +1,12 @@
-import { AnimatedAIChat } from "@/components/ui/animated-ai-chat"
+import { GovChat } from "@/components/ui/gov-chat"
+import { ChatProvider } from "@/contexts/chat-context"
 
 export function Demo() {
   return (
-    <div className="flex w-screen overflow-x-hidden">
-      <AnimatedAIChat />
-    </div>
+    <ChatProvider>
+      <div className="flex w-screen overflow-x-hidden">
+        <GovChat />
+      </div>
+    </ChatProvider>
   );
 }
