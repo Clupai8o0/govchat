@@ -322,7 +322,10 @@ export function GovChat() {
 									{latestMessage ? (
 										<TrustMeter
 											score={latestMessage.audit.trust_score}
-											heuristic="embeddings similarity, number of distinct sources, recency flag"
+											factors={latestMessage.audit.trust_factors}
+											auditId={latestMessage.audit.audit_id}
+											retrievedCount={latestMessage.audit.retrieved.length}
+											maxSimilarity={Math.max(...latestMessage.audit.retrieved.map(r => r.similarity || 0))}
 										/>
 									) : (
 										<div className="text-center py-12">
@@ -423,7 +426,10 @@ export function GovChat() {
 											{latestMessage ? (
 												<TrustMeter
 													score={latestMessage.audit.trust_score}
-													heuristic="embeddings similarity, number of distinct sources, recency flag"
+													factors={latestMessage.audit.trust_factors}
+													auditId={latestMessage.audit.audit_id}
+													retrievedCount={latestMessage.audit.retrieved.length}
+													maxSimilarity={Math.max(...latestMessage.audit.retrieved.map(r => r.similarity || 0))}
 												/>
 											) : (
 												<div className="text-center py-12">

@@ -70,6 +70,8 @@ class ChatAPI {
         trust_score: trustScore,
         retrieved: retrieved,
         timestamp: Date.now(),
+        trust_factors: queryResponse.trust.factors,
+        audit_id: queryResponse.trust.audit_id,
       },
     };
   }
@@ -113,6 +115,14 @@ class ChatAPI {
         trust_score: 77,
         retrieved: mockSources,
         timestamp: Date.now(),
+        trust_factors: [
+          { name: 'grounding', value: 1.0 },
+          { name: 'provenance', value: 1.0 },
+          { name: 'retrieval', value: 0.277 },
+          { name: 'verification', value: 1.0 },
+          { name: 'recency', value: 1.0 }
+        ],
+        audit_id: 'mock-audit',
       },
     };
   }

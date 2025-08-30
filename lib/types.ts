@@ -11,6 +11,8 @@ export interface AuditData {
   trust_score: number;
   retrieved: RetrievedSource[];
   timestamp: number;
+  trust_factors?: TrustFactor[];
+  audit_id?: string;
 }
 
 export interface RetrievedSource {
