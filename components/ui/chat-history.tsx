@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Bot, Clock, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -161,18 +161,45 @@ export function ChatHistory({
   onShowAudit 
 }: ChatHistoryProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isScrolling, setIsScrolling] = useState(false);
 
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  // Smooth scroll to bottom when messages change
+  const scrollToBottom = () => {
+    if (messagesEndRef.current) {
+      setIsScrolling(true);
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'end'
+      });
+      // Reset scrolling state after animation completes
+      setTimeout(() => setIsScrolling(false), 800);
     }
+  };
+
+  // Auto-scroll when new messages arrive or loading state changes
+  useEffect(() => {
+    // Use requestAnimationFrame to ensure DOM is ready
+    requestAnimationFrame(() => {
+      scrollToBottom();
+    });
   }, [messages, isLoading]);
+
+  // Also scroll on initial load
+  useEffect(() => {
+    if (messages.length > 0) {
+      // Use setTimeout to ensure DOM is updated
+      setTimeout(() => {
+        requestAnimationFrame(scrollToBottom);
+      }, 100);
+    }
+  }, []);
 
   return (
     <div 
       ref={scrollRef}
       className={cn(
-        "flex-1 overflow-y-auto space-y-6 p-4 scroll-smooth",
+        "relative flex-1 overflow-y-auto space-y-6 p-4 pb-6 scroll-smooth",
         "scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 hover:scrollbar-thumb-white/20",
         className
       )}
@@ -206,6 +233,22 @@ export function ChatHistory({
             ))}
             {isLoading && <TypingIndicator />}
           </>
+        )}
+        {/* Invisible element for scroll targeting */}
+        <div ref={messagesEndRef} className="h-1" />
+      </AnimatePresence>
+      
+      {/* Scroll indicator */}
+      <AnimatePresence>
+        {isScrolling && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="absolute bottom-4 right-4 bg-violet-500/20 backdrop-blur-sm border border-violet-500/30 rounded-full px-3 py-1"
+          >
+            <span className="text-xs text-violet-300">Scrolling to latest...</span>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

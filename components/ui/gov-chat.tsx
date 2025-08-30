@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, 
@@ -81,6 +81,7 @@ export function GovChat() {
   const [inputValue, setInputValue] = useState('');
   const [activeTab, setActiveTab] = useState('sources');
   const [selectedAudit, setSelectedAudit] = useState<ChatMessage['audit'] | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSendMessage = useCallback(async () => {
     if (!inputValue.trim() || isLoading) return;
@@ -115,6 +116,10 @@ export function GovChat() {
       console.error('Error sending message:', error);
     } finally {
       setLoading(false);
+      // Re-focus input for better UX
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   }, [inputValue, isLoading, settings, addMessage, setLoading, activeTab, isMobileSidebarOpen, setMobileSidebar]);
 
@@ -170,9 +175,9 @@ export function GovChat() {
 		<div className="min-h-screen text-white flex flex-col">
 			{/* Background Effects */}
 			<div className="absolute inset-0 overflow-hidden pointer-events-none">
-				<div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/5 rounded-full mix-blend-normal filter blur-[128px] animate-pulse" />
-				<div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/5 rounded-full mix-blend-normal filter blur-[128px] animate-pulse delay-700" />
-				<div className="absolute top-1/4 right-1/3 w-64 h-64 bg-fuchsia-500/5 rounded-full mix-blend-normal filter blur-[96px] animate-pulse delay-1000" />
+				<div className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/15 rounded-full mix-blend-normal filter blur-[128px] animate-pulse" />
+				<div className="absolute bottom-0 right-1/4 w-96 h-96 bg-indigo-500/15 rounded-full mix-blend-normal filter blur-[128px] animate-pulse delay-700" />
+				<div className="absolute top-1/4 right-1/3 w-64 h-64 bg-fuchsia-500/15 rounded-full mix-blend-normal filter blur-[96px] animate-pulse delay-1000" />
 			</div>
 
 			{/* Header */}
@@ -184,7 +189,9 @@ export function GovChat() {
 								<Sparkles className="w-6 h-6 text-white" />
 							</div>
 							<div>
-								<h1 className="text-lg sm:text-xl font-bold text-white">GovChat</h1>
+								<h1 className="text-lg sm:text-xl font-bold text-white">
+									GovChat
+								</h1>
 								<p className="text-xs sm:text-sm text-white/60 hidden xs:block">
 									AI Assistant with RAG, Citations & Audit
 								</p>
@@ -195,7 +202,7 @@ export function GovChat() {
 							<div className="text-sm text-white/60 hidden sm:block">
 								{messages.length} conversation{messages.length !== 1 ? "s" : ""}
 							</div>
-							
+
 							{/* Mobile Menu Button */}
 							<motion.button
 								onClick={toggleMobileSidebar}
@@ -208,7 +215,7 @@ export function GovChat() {
 								) : (
 									<Menu className="w-5 h-5 text-white" />
 								)}
-								
+
 								{/* Show badge when data is available */}
 								{!isMobileSidebarOpen && latestMessage && (
 									<motion.span
@@ -226,21 +233,24 @@ export function GovChat() {
 			{/* Main Content */}
 			<div className="flex-1 flex overflow-hidden relative z-10 w-screen">
 				{/* Left Panel - Chat */}
-				<div className="flex-1 flex flex-col">
-					{/* Chat History */}
-					<ChatHistory
-						messages={messages}
-						isLoading={isLoading}
-						onShowAudit={setSelectedAudit}
-						className="flex-1"
-					/>
+				<div className="flex-1 flex flex-col min-h-0">
+					{/* Chat History - Takes remaining space */}
+					<div className="flex-1 min-h-0 relative">
+						<ChatHistory
+							messages={messages}
+							isLoading={isLoading}
+							onShowAudit={setSelectedAudit}
+							className="absolute inset-0"
+						/>
+					</div>
 
-					{/* Input Area */}
-					<div className="border-t border-white/[0.05] bg-black/10 backdrop-blur-xl p-4 sm:p-6">
+					{/* Input Area - Sticky to bottom */}
+					<div className="flex-shrink-0 border-t border-white/[0.05] bg-black/10 backdrop-blur-xl p-4 sm:p-6">
 						<div className="max-w-4xl mx-auto space-y-4">
 							{/* Input */}
 							<div className="relative">
 								<Textarea
+									ref={inputRef}
 									value={inputValue}
 									onChange={(e) => setInputValue(e.target.value)}
 									onKeyDown={handleKeyDown}
@@ -361,13 +371,13 @@ export function GovChat() {
 							onClick={() => setMobileSidebar(false)}
 							className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
 						/>
-						
+
 						{/* Sidebar */}
 						<motion.div
-							initial={{ x: '100%' }}
+							initial={{ x: "100%" }}
 							animate={{ x: 0 }}
-							exit={{ x: '100%' }}
-							transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+							exit={{ x: "100%" }}
+							transition={{ type: "spring", damping: 25, stiffness: 200 }}
 							onTouchStart={handleSwipeStart}
 							className="fixed top-0 right-0 bottom-0 w-80 max-w-[90vw] sm:max-w-[85vw] bg-black/95 backdrop-blur-xl border-l border-white/[0.1] z-50 lg:hidden flex flex-col"
 						>
@@ -467,7 +477,9 @@ export function GovChat() {
 						<FileSearch className="w-6 h-6 text-white" />
 						{latestMessage.audit.retrieved.length > 0 && (
 							<span className="absolute -top-2 -right-2 w-6 h-6 bg-white text-violet-600 text-xs rounded-full flex items-center justify-center font-bold">
-								{latestMessage.audit.retrieved.length > 9 ? '9+' : latestMessage.audit.retrieved.length}
+								{latestMessage.audit.retrieved.length > 9
+									? "9+"
+									: latestMessage.audit.retrieved.length}
 							</span>
 						)}
 					</motion.button>
