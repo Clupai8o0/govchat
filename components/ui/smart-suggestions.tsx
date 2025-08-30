@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Search, 
   Lightbulb, 
   ArrowRight, 
   Database, 
@@ -13,18 +12,18 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { chatAPI } from '@/lib/api';
-import { SimilarResponse, SimilarDataset, RetrievedSource } from '@/lib/types';
+import { SimilarDataset, RetrievedSource } from '@/lib/types';
 
 interface SmartSuggestionsProps {
   latestSources: RetrievedSource[];
-  onSuggestionClick: (suggestion: string) => void;
+  onSuggestionClick: (_suggestion: string) => void;
   className?: string;
 }
 
 interface SuggestionItemProps {
   dataset: SimilarDataset;
   index: number;
-  onSuggestionClick: (suggestion: string) => void;
+  onSuggestionClick: (_suggestion: string) => void;
 }
 
 function SuggestionItem({ dataset, index, onSuggestionClick }: SuggestionItemProps) {
@@ -109,7 +108,6 @@ export function SmartSuggestions({
 }: SmartSuggestionsProps) {
   const [suggestions, setSuggestions] = useState<SimilarDataset[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
   const [currentDatasetId, setCurrentDatasetId] = useState<string | null>(null);
 
   // Get the best match (highest similarity) from latest sources
@@ -144,6 +142,7 @@ export function SmartSuggestions({
           setSuggestions(similarResponse.similar);
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error fetching suggestions:', error);
       } finally {
         setIsLoading(false);
@@ -155,20 +154,9 @@ export function SmartSuggestions({
     }
   }, [latestSources, currentDatasetId]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchValue.trim()) {
-      onSuggestionClick(searchValue.trim());
-      setSearchValue('');
-    }
-  };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSearchSubmit(e);
-    }
-  };
+
+
 
   if (latestSources.length === 0) {
     return (

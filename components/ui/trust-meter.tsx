@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, Minus, ChartColumnStacked, ChevronDown, ChevronRight, Shield, Database, Search, CheckCircle, Clock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, ChartColumnStacked, ChevronRight, Shield, Database, Search, CheckCircle, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TrustFactor } from '@/lib/types';
 

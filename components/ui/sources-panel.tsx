@@ -5,9 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FileText, 
   CheckCircle, 
-  AlertTriangle, 
   ChevronDown, 
-  ChevronRight,
   ExternalLink,
   Clock,
   Download,
@@ -30,7 +28,6 @@ function SourceItem({ source, index }: SourceItemProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   
-  const filename = source.source.split('/').pop() || source.source;
   const similarity = source.similarity ? Math.round(source.similarity * 100) : 0;
   
   const getSimilarityColor = (sim: number) => {
@@ -78,6 +75,7 @@ function SourceItem({ source, index }: SourceItemProps) {
         window.open(url, '_blank');
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error downloading CSV (likely CORS):', error);
       // CORS fallback: open in new tab where browser can handle the download
       if (source.id) {

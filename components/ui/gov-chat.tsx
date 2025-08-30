@@ -4,11 +4,6 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, 
-  Paperclip, 
-  Command, 
-  Settings as SettingsIcon,
-  Upload,
-  MessageSquare,
   BarChart3,
   FileSearch,
   Loader,
@@ -34,7 +29,7 @@ interface TabButtonProps {
   label: string;
   icon: React.ReactNode;
   isActive: boolean;
-  onClick: (id: string) => void;
+  onClick: (_id: string) => void;
   badge?: number;
 }
 
@@ -66,7 +61,6 @@ export function GovChat() {
   const {
     messages,
     isLoading,
-    settings,
     isMobileSidebarOpen,
     addMessage,
     setLoading,
@@ -95,7 +89,7 @@ export function GovChat() {
     setLoading(true);
 
     try {
-      const response = await chatAPI.askQuestion(question, settings);
+      const response = await chatAPI.askQuestion(question);
       
       const newMessage: ChatMessage = {
         id: Math.random().toString(36).substr(2, 9),
@@ -117,6 +111,7 @@ export function GovChat() {
         setMobileSidebar(false);
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error sending message:', error);
     } finally {
       setLoading(false);
@@ -125,7 +120,7 @@ export function GovChat() {
         inputRef.current?.focus();
       }, 100);
     }
-  }, [inputValue, isLoading, settings, addMessage, setLoading, activeTab, isMobileSidebarOpen, setMobileSidebar]);
+  }, [inputValue, isLoading, addMessage, setLoading, activeTab, isMobileSidebarOpen, setMobileSidebar]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {

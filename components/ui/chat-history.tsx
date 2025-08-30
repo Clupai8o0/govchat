@@ -1,22 +1,23 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Bot, Clock, ChevronDown, Flower } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from '@/lib/types';
+import { v4 } from 'uuid';
 
 interface ChatHistoryProps {
   messages: ChatMessage[];
   isLoading?: boolean;
   className?: string;
-  onShowAudit?: (audit: ChatMessage['audit']) => void;
+  onShowAudit?: (_audit: ChatMessage['audit']) => void;
 }
 
 interface MessageBubbleProps {
   message: ChatMessage;
   index: number;
-  onShowAudit?: (audit: ChatMessage['audit']) => void;
+  onShowAudit?: (_audit: ChatMessage['audit']) => void;
 }
 
 function MessageBubble({ message, index, onShowAudit }: MessageBubbleProps) {
@@ -165,7 +166,7 @@ export function ChatHistory({
   const [isScrolling, setIsScrolling] = useState(false);
 
   // Smooth scroll to bottom when messages change
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (messagesEndRef.current) {
       setIsScrolling(true);
       messagesEndRef.current.scrollIntoView({ 
@@ -175,7 +176,7 @@ export function ChatHistory({
       // Reset scrolling state after animation completes
       setTimeout(() => setIsScrolling(false), 800);
     }
-  };
+  }, []);
 
   // Auto-scroll when new messages arrive or loading state changes
   useEffect(() => {
@@ -183,7 +184,7 @@ export function ChatHistory({
     requestAnimationFrame(() => {
       scrollToBottom();
     });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, scrollToBottom]);
 
   // Also scroll on initial load
   useEffect(() => {
@@ -193,7 +194,7 @@ export function ChatHistory({
         requestAnimationFrame(scrollToBottom);
       }, 100);
     }
-  }, []);
+  }, [messages.length, scrollToBottom]);
 
   return (
     <div 

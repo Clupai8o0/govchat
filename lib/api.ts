@@ -1,4 +1,4 @@
-import { ApiResponse, ChatSettings, UploadedFile, QueryResponse, SimilarResponse } from './types';
+import { ApiResponse, QueryResponse, SimilarResponse } from './types';
 
 // API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
@@ -13,7 +13,7 @@ class ChatAPI {
   /**
    * Send a question to the query API and get a response with dataset information
    */
-  async askQuestion(question: string, settings: ChatSettings): Promise<ApiResponse> {
+  async askQuestion(question: string): Promise<ApiResponse> {
     try {
       // Encode the question for URL parameter
       const encodedQuestion = encodeURIComponent(question);
@@ -23,9 +23,11 @@ class ChatAPI {
           'Content-Type': 'application/json',
         },
       });
+      // eslint-disable-next-line no-console
       console.log("sent")
 
       if (!response.ok) {
+        // eslint-disable-next-line no-console
         console.log("failed")
         throw new Error(`API request failed: ${response.statusText}`);
       }
@@ -33,11 +35,13 @@ class ChatAPI {
       const data: QueryResponse = await response.json();
       
       // Log the API response for debugging
+      // eslint-disable-next-line no-console
       console.log('API Response:', data);
       
       // Transform the new API response to match the existing UI structure
       return this.transformQueryResponse(data);
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error asking question:', error);
       // Fallback mock response for development
       return this.getMockResponse(question);
@@ -93,9 +97,11 @@ class ChatAPI {
       }
 
       const data: SimilarResponse = await response.json();
+      // eslint-disable-next-line no-console
       console.log('Similar datasets response:', data);
       return data;
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Error fetching similar datasets:', error);
       return null;
     }
@@ -109,6 +115,7 @@ class ChatAPI {
       const response = await fetch(`${this.baseUrl}/ping`);
       return response.ok && (await response.text()) === 'pong';
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Health check failed:', error);
       return false;
     }
