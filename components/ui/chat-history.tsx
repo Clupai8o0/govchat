@@ -2,7 +2,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Bot, Clock, ChevronDown } from 'lucide-react';
+import { User, Bot, Clock, ChevronDown, Flower } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from '@/lib/types';
 
@@ -212,12 +212,12 @@ export function ChatHistory({
             className="flex flex-col items-center justify-center h-full text-center py-12"
           >
             <div className="w-16 h-16 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 flex items-center justify-center mb-4">
-              <Bot className="w-8 h-8 text-white" />
+              <Flower className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-3xl font-bold text-white mb-2">
               Welcome to GovChat
             </h3>
-            <p className="text-white/60 max-w-md leading-relaxed">
+            <p className="text-white/60 max-w-md leading-relaxed text-balance">
               Search and discover government datasets with AI assistance. Get detailed information about relevant data sources.
             </p>
           </motion.div>

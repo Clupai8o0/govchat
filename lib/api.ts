@@ -1,4 +1,4 @@
-import { ApiResponse, ChatSettings, UploadedFile, QueryResponse } from './types';
+import { ApiResponse, ChatSettings, UploadedFile, QueryResponse, SimilarResponse } from './types';
 
 // API configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
@@ -74,6 +74,31 @@ class ChatAPI {
         audit_id: queryResponse.trust.audit_id,
       },
     };
+  }
+
+  /**
+   * Get similar datasets for a given dataset ID
+   */
+  async getSimilarDatasets(datasetId: string): Promise<SimilarResponse | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/similar/${datasetId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Similar datasets request failed: ${response.statusText}`);
+      }
+
+      const data: SimilarResponse = await response.json();
+      console.log('Similar datasets response:', data);
+      return data;
+    } catch (error) {
+      console.error('Error fetching similar datasets:', error);
+      return null;
+    }
   }
 
   /**

@@ -85,3 +85,20 @@ export interface UploadedFile {
   type: string;
   status: 'uploading' | 'processing' | 'indexed' | 'error';
 }
+
+// Types for the similar datasets API
+export interface SimilarResponse {
+  dataset_id: string;
+  answer: string;
+  similar: SimilarDataset[];
+  count: number;
+}
+
+export interface SimilarDataset {
+  id: string;
+  title: string;
+  description: string;
+  agency: string;
+  api_url: string;
+  similarity_score: number;
+}

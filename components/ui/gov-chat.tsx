@@ -14,7 +14,8 @@ import {
   Loader,
   Flower,
   Menu,
-  X
+  X,
+  Sparkles
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChat } from '@/contexts/chat-context';
@@ -25,6 +26,7 @@ import { ChatMessage } from '@/lib/types';
 import ChatHistory from './chat-history';
 import TrustMeter from './trust-meter';
 import SourcesPanel from './sources-panel';
+import SmartSuggestions from './smart-suggestions';
 import { Textarea } from './animated-ai-chat';
 
 interface TabButtonProps {
@@ -77,6 +79,14 @@ export function GovChat() {
   const [selectedAudit, setSelectedAudit] = useState<ChatMessage['audit'] | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
+  const handleSuggestionClick = useCallback((suggestion: string) => {
+    setInputValue(suggestion);
+    // Focus the input after setting the value
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  }, []);
+
   const handleSendMessage = useCallback(async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -97,9 +107,9 @@ export function GovChat() {
 
       addMessage(newMessage);
       
-      // Auto-switch to sources tab if not already there
-      if (activeTab !== 'sources') {
-        setActiveTab('sources');
+      // Auto-switch to suggestions tab to show related datasets
+      if (activeTab !== 'suggestions') {
+        setActiveTab('suggestions');
       }
       
       // Close mobile sidebar after sending message (mobile UX improvement)
@@ -289,7 +299,7 @@ export function GovChat() {
 				<div className="hidden lg:flex w-96 border-l border-white/[0.05] bg-black/10 backdrop-blur-xl flex-col">
 					{/* Tab Navigation */}
 					<div className="border-b border-white/[0.05] p-4">
-						<div className="grid grid-cols-2 gap-1 bg-white/[0.02] p-1 rounded-lg">
+						<div className="grid grid-cols-3 gap-1 bg-white/[0.02] p-1 rounded-lg">
 							<TabButton
 								id="trust"
 								label="Trust"
@@ -304,6 +314,13 @@ export function GovChat() {
 								isActive={activeTab === "sources"}
 								onClick={setActiveTab}
 								badge={latestMessage?.audit.retrieved.length}
+							/>
+							<TabButton
+								id="suggestions"
+								label="Explore"
+								icon={<Sparkles className="w-4 h-4" />}
+								isActive={activeTab === "suggestions"}
+								onClick={setActiveTab}
 							/>
 						</div>
 					</div>
@@ -351,6 +368,21 @@ export function GovChat() {
 									/>
 								</motion.div>
 							)}
+
+							{activeTab === "suggestions" && (
+								<motion.div
+									key="suggestions"
+									initial={{ opacity: 0, x: 20 }}
+									animate={{ opacity: 1, x: 0 }}
+									exit={{ opacity: 0, x: -20 }}
+									transition={{ duration: 0.3 }}
+								>
+									<SmartSuggestions
+										latestSources={latestMessage?.audit.retrieved || []}
+										onSuggestionClick={handleSuggestionClick}
+									/>
+								</motion.div>
+							)}
 						</AnimatePresence>
 					</div>
 				</div>
@@ -393,7 +425,7 @@ export function GovChat() {
 
 							{/* Mobile Tab Navigation */}
 							<div className="border-b border-white/[0.05] p-4">
-								<div className="grid grid-cols-2 gap-1 bg-white/[0.02] p-1 rounded-lg">
+								<div className="grid grid-cols-3 gap-1 bg-white/[0.02] p-1 rounded-lg">
 									<TabButton
 										id="trust"
 										label="Trust"
@@ -408,6 +440,13 @@ export function GovChat() {
 										isActive={activeTab === "sources"}
 										onClick={setActiveTab}
 										badge={latestMessage?.audit.retrieved.length}
+									/>
+									<TabButton
+										id="suggestions"
+										label="Explore"
+										icon={<Sparkles className="w-4 h-4" />}
+										isActive={activeTab === "suggestions"}
+										onClick={setActiveTab}
 									/>
 								</div>
 							</div>
@@ -452,6 +491,21 @@ export function GovChat() {
 										>
 											<SourcesPanel
 												sources={latestMessage?.audit.retrieved || []}
+											/>
+										</motion.div>
+									)}
+
+									{activeTab === "suggestions" && (
+										<motion.div
+											key="suggestions-mobile"
+											initial={{ opacity: 0, x: 20 }}
+											animate={{ opacity: 1, x: 0 }}
+											exit={{ opacity: 0, x: -20 }}
+											transition={{ duration: 0.3 }}
+										>
+											<SmartSuggestions
+												latestSources={latestMessage?.audit.retrieved || []}
+												onSuggestionClick={handleSuggestionClick}
 											/>
 										</motion.div>
 									)}
