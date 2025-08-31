@@ -44,43 +44,54 @@ function SourceItem({ source, index }: SourceItemProps) {
     return 'bg-red-400/10 border-red-400/20';
   };
 
-  const handleDownloadCsv = async () => {
-    if (!source.id) return;
+  const handleDownloadFile = async () => {
+    if (!source.api_url) return;
     
     setIsDownloading(true);
     try {
-      const url = `http://data.api.abs.gov.au/data/${source.id}`;
+      // Get file extension from api_url to determine file type
+      const fileExtension = source.api_url.split('.').pop()?.toLowerCase() || 'file';
+      const mimeTypes: { [key: string]: string } = {
+        'csv': 'text/csv',
+        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'xls': 'application/vnd.ms-excel',
+        'json': 'application/json',
+        'xml': 'application/xml'
+      };
       
       // Try direct download first
-      const response = await fetch(url, {
+      const response = await fetch(source.api_url, {
         headers: {
-          'Accept': 'text/csv'
+          'Accept': mimeTypes[fileExtension] || 'application/octet-stream'
         },
         mode: 'cors'
       });
       
       if (response.ok) {
-        const csvData = await response.text();
-        const blob = new Blob([csvData], { type: 'text/csv' });
-        const downloadUrl = window.URL.createObjectURL(blob);
+        const data = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(data);
         const link = document.createElement('a');
         link.href = downloadUrl;
-        link.download = `${source.id}_${source.source.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.csv`;
+        
+        // Generate filename from source title or use api_url
+        const filename = source.source 
+          ? `${source.source.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${fileExtension}`
+          : source.api_url.split('/').pop() || `download.${fileExtension}`;
+        
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(downloadUrl);
       } else {
         // Open in new tab if direct download fails
-        window.open(url, '_blank');
+        window.open(source.api_url, '_blank');
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error downloading CSV (likely CORS):', error);
+      console.error('Error downloading file (likely CORS):', error);
       // CORS fallback: open in new tab where browser can handle the download
-      if (source.id) {
-        window.open(`http://data.api.abs.gov.au/data/${source.id}`, '_blank');
-      }
+      window.open(source.api_url, '_blank');
     } finally {
       setIsDownloading(false);
     }
@@ -126,9 +137,9 @@ function SourceItem({ source, index }: SourceItemProps) {
 
               {/* Action buttons */}
               <div className="flex items-center gap-2 mt-3">
-                {source.id && (
+                {source.api_url && (
                   <motion.button
-                    onClick={handleDownloadCsv}
+                    onClick={handleDownloadFile}
                     disabled={isDownloading}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -152,7 +163,7 @@ function SourceItem({ source, index }: SourceItemProps) {
                     ) : (
                       <>
                         <Download className="w-3 h-3" />
-                        <span>Download CSV</span>
+                        <span>Download File</span>
                       </>
                     )}
                   </motion.button>
@@ -225,16 +236,18 @@ function SourceItem({ source, index }: SourceItemProps) {
                   </div>
                 )}
                 
-                {source.id && (
+                {source.api_url && (
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-white/60">Dataset URL:</span>
                     <a
-                      href={`http://data.api.abs.gov.au/data/${source.id}`}
+                      href={source.api_url}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
                     >
-                      <span className="font-mono">{source.id}</span>
+                      <span className="font-mono text-right max-w-[200px] truncate">
+                        {source.api_url.split('/').pop() || source.api_url}
+                      </span>
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
