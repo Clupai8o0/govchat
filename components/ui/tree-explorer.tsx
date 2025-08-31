@@ -25,7 +25,8 @@ import {
   ZoomOut, 
   Maximize2,
   Download,
-  Loader2
+  Loader2,
+  Expand
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { TreeNodeData, RetrievedSource, SimilarDataset } from '@/lib/types';
@@ -41,6 +42,7 @@ interface TreeExplorerProps {
   initialQuery: string;
   initialDatasets: RetrievedSource[];
   className?: string;
+  onOpenFullscreen?: () => void;
 }
 
 interface TreeExplorerContentProps extends TreeExplorerProps {}
@@ -48,13 +50,21 @@ interface TreeExplorerContentProps extends TreeExplorerProps {}
 function TreeExplorerContent({ 
   initialQuery, 
   initialDatasets, 
-  className 
+  className,
+  onOpenFullscreen
 }: TreeExplorerContentProps) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [loadingNodes, setLoadingNodes] = useState<Set<string>>(new Set());
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  // Debug: Log if fullscreen handler is available
+  console.log('🔍 TreeExplorer props:', { 
+    hasFullscreenHandler: !!onOpenFullscreen,
+    initialQuery,
+    datasetCount: initialDatasets.length 
+  });
   
   const { fitView, zoomIn, zoomOut } = useReactFlow();
 
@@ -409,6 +419,40 @@ function TreeExplorerContent({
               >
                 <RotateCcw className="w-4 h-4" />
               </motion.button>
+              
+              {onOpenFullscreen && (
+                <motion.button
+                  onClick={() => {
+                    console.log('🚀 Fullscreen button clicked!');
+                    onOpenFullscreen();
+                  }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  animate={{ 
+                    boxShadow: [
+                      "0 0 0 0 rgba(139, 92, 246, 0)",
+                      "0 0 0 4px rgba(139, 92, 246, 0.3)",
+                      "0 0 0 0 rgba(139, 92, 246, 0)"
+                    ]
+                  }}
+                  transition={{ 
+                    duration: 2, 
+                    repeat: Infinity, 
+                    repeatDelay: 3 
+                  }}
+                  className="p-3 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white transition-all shadow-lg relative z-10 border-2 border-violet-400"
+                  title="Open Fullscreen View"
+                >
+                  <Expand className="w-5 h-5" />
+                </motion.button>
+              )}
+              
+              {/* Debug: Show if onOpenFullscreen is available */}
+              {!onOpenFullscreen && (
+                <div className="text-xs text-red-400 p-1">
+                  No fullscreen handler
+                </div>
+              )}
             </div>
           </motion.div>
           
@@ -463,6 +507,23 @@ function TreeExplorerContent({
               <span>{nodes.length} nodes</span>
               <span>{edges.length} connections</span>
             </div>
+            
+            {/* Test fullscreen button in info panel */}
+            {onOpenFullscreen && (
+              <motion.button
+                onClick={() => {
+                  console.log('🚀 Info panel fullscreen button clicked!');
+                  onOpenFullscreen();
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="mt-3 w-full p-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white transition-all shadow-lg text-xs font-medium"
+                title="Open Fullscreen View"
+              >
+                <Expand className="w-4 h-4 inline mr-2" />
+                Open Fullscreen
+              </motion.button>
+            )}
           </motion.div>
         </Panel>
       </ReactFlow>

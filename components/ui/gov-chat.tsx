@@ -24,6 +24,7 @@ import TrustMeter from './trust-meter';
 import SourcesPanel from './sources-panel';
 import SmartSuggestions from './smart-suggestions';
 import TreeExplorer from './tree-explorer';
+import TreeExplorerModal from './tree-explorer-modal';
 import { Textarea } from './animated-ai-chat';
 
 interface TabButtonProps {
@@ -73,6 +74,7 @@ export function GovChat() {
   const [inputValue, setInputValue] = useState('');
   const [activeTab, setActiveTab] = useState('sources');
   const [selectedAudit, setSelectedAudit] = useState<ChatMessage['audit'] | null>(null);
+  const [isTreeModalOpen, setIsTreeModalOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSuggestionClick = useCallback((suggestion: string) => {
@@ -81,6 +83,14 @@ export function GovChat() {
     setTimeout(() => {
       inputRef.current?.focus();
     }, 100);
+  }, []);
+
+  const handleOpenTreeModal = useCallback(() => {
+    setIsTreeModalOpen(true);
+  }, []);
+
+  const handleCloseTreeModal = useCallback(() => {
+    setIsTreeModalOpen(false);
   }, []);
 
   const handleSendMessage = useCallback(async () => {
@@ -408,6 +418,7 @@ export function GovChat() {
 												initialQuery={latestMessage.question}
 												initialDatasets={latestMessage.audit.retrieved}
 												className="h-full"
+												onOpenFullscreen={handleOpenTreeModal}
 											/>
 										) : (
 											<div className="text-center py-12 m-4">
@@ -571,6 +582,7 @@ export function GovChat() {
 														initialQuery={latestMessage.question}
 														initialDatasets={latestMessage.audit.retrieved}
 														className="h-full"
+														onOpenFullscreen={handleOpenTreeModal}
 													/>
 												) : (
 													<div className="text-center py-12 m-4">
@@ -649,6 +661,16 @@ export function GovChat() {
 					</motion.div>
 				)}
 			</AnimatePresence>
+
+			{/* Tree Explorer Fullscreen Modal */}
+			{latestMessage && (
+				<TreeExplorerModal
+					isOpen={isTreeModalOpen}
+					onClose={handleCloseTreeModal}
+					initialQuery={latestMessage.question}
+					initialDatasets={latestMessage.audit.retrieved}
+				/>
+			)}
 		</div>
 	);
 }
