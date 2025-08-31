@@ -86,14 +86,10 @@ class ChatAPI {
   async getSimilarDatasets(datasetId: string): Promise<SimilarResponse | null> {
     // For now, use mock data directly since the API endpoint isn't available
     // This can be switched back to real API calls when the endpoint is implemented
-    console.log('🔄 API: Using mock similar datasets for datasetId:', datasetId);
-    
     // Add a small delay to simulate API call
-    console.log('⏳ API: Simulating 1 second delay...');
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     const mockData = this.getMockSimilarDatasets(datasetId);
-    console.log('✅ API: Returning mock data:', mockData);
     
     return mockData;
 

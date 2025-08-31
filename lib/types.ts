@@ -113,7 +113,7 @@ export interface TreeNode {
   expanded?: boolean;
 }
 
-export interface TreeNodeData {
+export interface TreeNodeData extends Record<string, unknown> {
   title: string;
   description?: string;
   agency?: string;
@@ -124,8 +124,8 @@ export interface TreeNodeData {
   isExpanded?: boolean;
   isLoading?: boolean;
   childCount?: number;
-  onExpand?: (nodeId: string) => void;
-  onDownload?: (apiUrl: string, title: string) => void;
+  onExpand?: (_nodeId: string) => void;
+  onDownload?: (_apiUrl: string, _title: string) => void;
 }
 
 export interface TreeEdge {

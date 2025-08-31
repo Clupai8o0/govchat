@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   ReactFlow,
   Node,
   Edge,
-  addEdge,
   useNodesState,
   useEdgesState,
   Controls,
@@ -24,12 +23,11 @@ import {
   ZoomIn, 
   ZoomOut, 
   Maximize2,
-  Download,
   Loader2,
   Expand
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { TreeNodeData, RetrievedSource, SimilarDataset } from '@/lib/types';
+import { TreeNodeData, RetrievedSource } from '@/lib/types';
 import { chatAPI } from '@/lib/api';
 import DatasetNode from './dataset-node';
 
@@ -53,20 +51,197 @@ function TreeExplorerContent({
   className,
   onOpenFullscreen
 }: TreeExplorerContentProps) {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [loadingNodes, setLoadingNodes] = useState<Set<string>>(new Set());
   const [isInitialized, setIsInitialized] = useState(false);
   
   // Debug: Log if fullscreen handler is available
-  console.log('🔍 TreeExplorer props:', { 
-    hasFullscreenHandler: !!onOpenFullscreen,
-    initialQuery,
-    datasetCount: initialDatasets.length 
-  });
+  // console.log('🔍 TreeExplorer props:', { 
+  //   hasFullscreenHandler: !!onOpenFullscreen,
+  //   initialQuery,
+  //   datasetCount: initialDatasets.length 
+  // });
   
   const { fitView, zoomIn, zoomOut } = useReactFlow();
+
+  // Handle file download
+  const handleDownload = useCallback(async (apiUrl: string, title: string) => {
+    try {
+      const fileExtension = apiUrl.split('.').pop()?.toLowerCase() || 'file';
+      const response = await fetch(apiUrl, { mode: 'cors' });
+      
+      if (response.ok) {
+        const data = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(data);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${fileExtension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(downloadUrl);
+      } else {
+        window.open(apiUrl, '_blank');
+      }
+    } catch {
+      window.open(apiUrl, '_blank');
+    }
+  }, []);
+
+  // Handle node expansion to fetch similar datasets
+  const handleNodeExpand = useCallback(async (datasetId: string) => {
+    // Don't expand if no valid dataset ID or if it's a generated ID
+    if (!datasetId || datasetId.startsWith('dataset-')) {
+      return;
+    }
+    
+    if (expandedNodes.has(datasetId) || loadingNodes.has(datasetId)) {
+      return;
+    }
+    setLoadingNodes(prev => new Set(prev).add(datasetId));
+    
+    // Update node to show loading state
+    setNodes(prevNodes => {
+      return prevNodes.map(node => 
+        node.data.datasetId === datasetId 
+          ? { 
+              ...node, 
+              data: { 
+                ...node.data, 
+                isLoading: true
+              } 
+            }
+          : node
+      );
+    });
+
+    try {
+      const similarResponse = await chatAPI.getSimilarDatasets(datasetId);
+      
+      if (similarResponse && similarResponse.similar && similarResponse.similar.length > 0) {
+        
+        // Use a function to get current nodes to avoid stale closure
+        setNodes(currentNodes => {
+          const parentNode = currentNodes.find(n => n.data.datasetId === datasetId);
+          
+          if (!parentNode) {
+            return currentNodes;
+          }
+
+          // Create child nodes with unique IDs
+          const childNodes: Node[] = similarResponse.similar.map((dataset, index) => {
+            const childNodeId = `child-${datasetId}-${dataset.id}`;
+            return {
+              id: childNodeId,
+              type: 'dataset',
+              position: {
+                x: parentNode.position.x + (index - (similarResponse.similar.length - 1) / 2) * 320,
+                y: parentNode.position.y + 280,
+              },
+              data: {
+                title: dataset.title,
+                description: dataset.description,
+                agency: dataset.agency,
+                api_url: dataset.api_url,
+                similarity: dataset.similarity_score,
+                datasetId: dataset.id,
+                isExpanded: false,
+                childCount: Math.floor(Math.random() * 4) + 1, // Mock child count for now
+                onExpand: handleNodeExpand,
+                onDownload: handleDownload,
+              } as TreeNodeData,
+            };
+          });
+
+          // Update parent node to show as expanded and add child nodes
+          const updatedNodes = [
+            ...currentNodes.map(node => 
+              node.data.datasetId === datasetId 
+                ? { 
+                    ...node, 
+                    data: { 
+                      ...node.data, 
+                      isExpanded: true,
+                      isLoading: false,
+                      childCount: similarResponse.similar.length
+                    } 
+                  }
+                : node
+            ),
+            ...childNodes
+          ];
+          
+          // Also create and add edges here where we have access to parentNode
+          setEdges(prevEdges => {
+            const childEdges: Edge[] = similarResponse.similar.map((dataset, _index) => {
+              const childNodeId = `child-${datasetId}-${dataset.id}`;
+              return {
+                id: `edge-${parentNode.id}-${childNodeId}`,
+                source: parentNode.id,
+                target: childNodeId,
+                type: 'smoothstep',
+                animated: true,
+                style: { stroke: '#3b82f6', strokeWidth: 2 },
+              };
+            });
+
+            return [...prevEdges, ...childEdges];
+          });
+          
+          return updatedNodes;
+        });
+
+        setExpandedNodes(prev => new Set(prev).add(datasetId));
+
+        // Fit view to show new nodes after a delay
+        setTimeout(() => {
+          fitView({ padding: 0.1, duration: 800 });
+        }, 300);
+      } else {
+        // Update the node to show it has no children
+        setNodes(prevNodes => 
+          prevNodes.map(node => 
+            node.data.datasetId === datasetId 
+              ? { 
+                  ...node, 
+                  data: { 
+                    ...node.data, 
+                    childCount: 0,
+                    isExpanded: true,
+                    isLoading: false
+                  } 
+                }
+              : node
+          )
+        );
+      }
+    } catch {
+      // Show error state on the node
+      setNodes(prevNodes => 
+        prevNodes.map(node => 
+          node.data.datasetId === datasetId 
+            ? { 
+                ...node, 
+                data: { 
+                  ...node.data, 
+                  childCount: 0,
+                  isExpanded: true,
+                  isLoading: false
+                } 
+              }
+            : node
+        )
+      );
+    } finally {
+      setLoadingNodes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(datasetId);
+        return newSet;
+      });
+    }
+  }, [expandedNodes, loadingNodes, fitView, handleDownload, setEdges, setNodes]);
 
   // Initialize the tree with root query and initial datasets
   const initializeTree = useCallback(() => {
@@ -120,206 +295,7 @@ function TreeExplorerContent({
 
     // Fit view after a short delay to ensure nodes are rendered
     setTimeout(() => fitView({ padding: 0.2 }), 100);
-  }, [initialQuery, initialDatasets, isInitialized, fitView]);
-
-  // Handle node expansion to fetch similar datasets
-  const handleNodeExpand = useCallback(async (datasetId: string) => {
-    console.log('🚀 Starting expansion for datasetId:', datasetId);
-    
-    // Don't expand if no valid dataset ID or if it's a generated ID
-    if (!datasetId || datasetId.startsWith('dataset-')) {
-      console.log('❌ Invalid dataset ID, cannot expand');
-      return;
-    }
-    
-    if (expandedNodes.has(datasetId) || loadingNodes.has(datasetId)) {
-      console.log('⚠️ Node already expanded or loading');
-      return;
-    }
-
-    console.log('✅ Setting loading state for:', datasetId);
-    setLoadingNodes(prev => new Set(prev).add(datasetId));
-    
-    // Update node to show loading state
-    setNodes(prevNodes => {
-      console.log('🔄 Updating nodes to show loading state');
-      return prevNodes.map(node => 
-        node.data.datasetId === datasetId 
-          ? { 
-              ...node, 
-              data: { 
-                ...node.data, 
-                isLoading: true
-              } 
-            }
-          : node
-      );
-    });
-
-    try {
-      console.log('📡 Calling getSimilarDatasets API with datasetId:', datasetId);
-      const similarResponse = await chatAPI.getSimilarDatasets(datasetId);
-      console.log('📦 Similar datasets response:', similarResponse);
-      
-      if (similarResponse && similarResponse.similar && similarResponse.similar.length > 0) {
-        console.log('🔍 Finding parent node for datasetId:', datasetId);
-        
-        // Use a function to get current nodes to avoid stale closure
-        setNodes(currentNodes => {
-          const parentNode = currentNodes.find(n => n.data.datasetId === datasetId);
-          console.log('👨‍👩‍👧‍👦 Parent node found:', parentNode);
-          
-          if (!parentNode) {
-            console.error('❌ Parent node not found for datasetId:', datasetId);
-            return currentNodes;
-          }
-
-          // Create child nodes with unique IDs
-          const childNodes: Node[] = similarResponse.similar.map((dataset, index) => {
-            const childNodeId = `child-${datasetId}-${dataset.id}`;
-            return {
-              id: childNodeId,
-              type: 'dataset',
-              position: {
-                x: parentNode.position.x + (index - (similarResponse.similar.length - 1) / 2) * 320,
-                y: parentNode.position.y + 280,
-              },
-              data: {
-                title: dataset.title,
-                description: dataset.description,
-                agency: dataset.agency,
-                api_url: dataset.api_url,
-                similarity: dataset.similarity_score,
-                datasetId: dataset.id,
-                isExpanded: false,
-                childCount: Math.floor(Math.random() * 4) + 1, // Mock child count for now
-                onExpand: handleNodeExpand,
-                onDownload: handleDownload,
-              } as TreeNodeData,
-            };
-          });
-
-          console.log('🌱 Creating child nodes:', childNodes.length);
-
-          // Update parent node to show as expanded and add child nodes
-          const updatedNodes = [
-            ...currentNodes.map(node => 
-              node.data.datasetId === datasetId 
-                ? { 
-                    ...node, 
-                    data: { 
-                      ...node.data, 
-                      isExpanded: true,
-                      isLoading: false,
-                      childCount: similarResponse.similar.length
-                    } 
-                  }
-                : node
-            ),
-            ...childNodes
-          ];
-
-          console.log('📊 Total nodes after expansion:', updatedNodes.length);
-          
-          // Also create and add edges here where we have access to parentNode
-          setEdges(prevEdges => {
-            const childEdges: Edge[] = similarResponse.similar.map((dataset, index) => {
-              const childNodeId = `child-${datasetId}-${dataset.id}`;
-              return {
-                id: `edge-${parentNode.id}-${childNodeId}`,
-                source: parentNode.id,
-                target: childNodeId,
-                type: 'smoothstep',
-                animated: true,
-                style: { stroke: '#3b82f6', strokeWidth: 2 },
-              };
-            });
-
-            console.log('🔗 Creating child edges:', childEdges.length);
-            return [...prevEdges, ...childEdges];
-          });
-          
-          return updatedNodes;
-        });
-
-        setExpandedNodes(prev => new Set(prev).add(datasetId));
-
-        // Fit view to show new nodes after a delay
-        setTimeout(() => {
-          console.log('🎯 Fitting view to show new nodes');
-          fitView({ padding: 0.1, duration: 800 });
-        }, 300);
-      } else {
-        console.log('📭 No similar datasets found');
-        // Update the node to show it has no children
-        setNodes(prevNodes => 
-          prevNodes.map(node => 
-            node.data.datasetId === datasetId 
-              ? { 
-                  ...node, 
-                  data: { 
-                    ...node.data, 
-                    childCount: 0,
-                    isExpanded: true,
-                    isLoading: false
-                  } 
-                }
-              : node
-          )
-        );
-      }
-    } catch (error) {
-      console.error('💥 Error expanding node:', error);
-      // Show error state on the node
-      setNodes(prevNodes => 
-        prevNodes.map(node => 
-          node.data.datasetId === datasetId 
-            ? { 
-                ...node, 
-                data: { 
-                  ...node.data, 
-                  childCount: 0,
-                  isExpanded: true,
-                  isLoading: false
-                } 
-              }
-            : node
-        )
-      );
-    } finally {
-      console.log('🧹 Cleaning up loading state for:', datasetId);
-      setLoadingNodes(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(datasetId);
-        return newSet;
-      });
-    }
-  }, [expandedNodes, loadingNodes, fitView]);
-
-  // Handle file download
-  const handleDownload = useCallback(async (apiUrl: string, title: string) => {
-    try {
-      const fileExtension = apiUrl.split('.').pop()?.toLowerCase() || 'file';
-      const response = await fetch(apiUrl, { mode: 'cors' });
-      
-      if (response.ok) {
-        const data = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(data);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.${fileExtension}`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-      } else {
-        window.open(apiUrl, '_blank');
-      }
-    } catch (error) {
-      console.error('Download error:', error);
-      window.open(apiUrl, '_blank');
-    }
-  }, []);
+  }, [initialQuery, initialDatasets, isInitialized, fitView, handleDownload, handleNodeExpand, setEdges, setNodes]);
 
   // Reset tree to initial state
   const handleReset = useCallback(() => {
@@ -423,7 +399,6 @@ function TreeExplorerContent({
               {onOpenFullscreen && (
                 <motion.button
                   onClick={() => {
-                    console.log('🚀 Fullscreen button clicked!');
                     onOpenFullscreen();
                   }}
                   whileHover={{ scale: 1.05 }}
@@ -500,7 +475,7 @@ function TreeExplorerContent({
               <h3 className="text-sm font-semibold text-white">Dataset Tree Explorer</h3>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
-              Click "Explore" on any dataset to discover similar datasets and build your knowledge tree. 
+              Click &quot;Explore&quot; on any dataset to discover similar datasets and build your knowledge tree. 
               Use the controls to navigate and zoom around the tree.
             </p>
             <div className="mt-3 flex items-center gap-4 text-xs text-slate-400">
@@ -512,7 +487,6 @@ function TreeExplorerContent({
             {onOpenFullscreen && (
               <motion.button
                 onClick={() => {
-                  console.log('🚀 Info panel fullscreen button clicked!');
                   onOpenFullscreen();
                 }}
                 whileHover={{ scale: 1.05 }}

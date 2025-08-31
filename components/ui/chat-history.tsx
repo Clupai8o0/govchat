@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { User, Bot, Clock, ChevronDown, Flower } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ChatMessage } from '@/lib/types';
-import { v4 } from 'uuid';
+
 
 interface ChatHistoryProps {
   messages: ChatMessage[];

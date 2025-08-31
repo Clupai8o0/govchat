@@ -84,7 +84,7 @@ export function TreeExplorerModal({
                       Dataset Tree Explorer - Fullscreen
                     </h2>
                     <p className="text-sm text-white/60">
-                      Exploring: "{initialQuery}"
+                      Exploring: &quot;{initialQuery}&quot;
                     </p>
                   </div>
                 </div>
@@ -114,7 +114,7 @@ export function TreeExplorerModal({
             <div className="absolute bottom-0 left-0 right-0 z-10 bg-slate-900/95 backdrop-blur-sm border-t border-white/[0.05] p-3">
               <div className="flex items-center justify-between text-xs text-white/60">
                 <div className="flex items-center gap-4">
-                  <span>💡 Click "Explore" on any dataset to discover similar ones</span>
+                  <span>💡 Click &quot;Explore&quot; on any dataset to discover similar ones</span>
                   <span>🔍 Use mouse wheel to zoom, drag to pan</span>
                 </div>
                 <div className="flex items-center gap-2">

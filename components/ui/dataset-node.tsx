@@ -1,7 +1,7 @@
 "use client";
 
 import React, { memo } from 'react';
-import { Handle, Position, NodeProps } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { 
   Database, 
@@ -14,8 +14,9 @@ import {
 import { cn } from '@/lib/utils';
 import { TreeNodeData } from '@/lib/types';
 
-interface DatasetNodeProps extends NodeProps {
+interface DatasetNodeProps {
   data: TreeNodeData;
+  selected?: boolean;
 }
 
 function DatasetNode({ data, selected }: DatasetNodeProps) {
