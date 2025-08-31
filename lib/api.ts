@@ -118,7 +118,7 @@ class ChatAPI {
       // eslint-disable-next-line no-console
       // console.log('Similar datasets response:', data);
       return data;
-    } catch (error) {
+    } catch {
       // eslint-disable-next-line no-console
       // console.error('Error fetching similar datasets, using mock data:', error);
       return this.getMockSimilarDatasets(datasetId);
