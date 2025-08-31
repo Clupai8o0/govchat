@@ -84,16 +84,39 @@ class ChatAPI {
    * Get similar datasets for a given dataset ID
    */
   async getSimilarDatasets(datasetId: string): Promise<SimilarResponse | null> {
+    // For now, use mock data directly since the API endpoint isn't available
+    // This can be switched back to real API calls when the endpoint is implemented
+    console.log('🔄 API: Using mock similar datasets for datasetId:', datasetId);
+    
+    // Add a small delay to simulate API call
+    console.log('⏳ API: Simulating 1 second delay...');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    const mockData = this.getMockSimilarDatasets(datasetId);
+    console.log('✅ API: Returning mock data:', mockData);
+    
+    return mockData;
+
+    /* Uncomment this when the real API is available:
     try {
+      // Add timeout to prevent hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(`${this.baseUrl}/similar/${datasetId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`Similar datasets request failed: ${response.statusText}`);
+        // eslint-disable-next-line no-console
+        console.warn(`Similar datasets API not available (${response.status}), using mock data`);
+        return this.getMockSimilarDatasets(datasetId);
       }
 
       const data: SimilarResponse = await response.json();
@@ -102,9 +125,49 @@ class ChatAPI {
       return data;
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error fetching similar datasets:', error);
-      return null;
+      console.error('Error fetching similar datasets, using mock data:', error);
+      return this.getMockSimilarDatasets(datasetId);
     }
+    */
+  }
+
+  /**
+   * Mock similar datasets response for development/fallback
+   */
+  private getMockSimilarDatasets(datasetId: string): SimilarResponse {
+    const mockSimilarDatasets = [
+      {
+        id: `similar-${datasetId}-1`,
+        title: `Related Dataset A for ${datasetId}`,
+        description: 'This is a mock similar dataset that would be related to the original query. It contains complementary information and data points.',
+        agency: 'Australian Bureau of Statistics',
+        api_url: 'https://www.abs.gov.au/statistics/mock-dataset-a.csv',
+        similarity_score: 0.85,
+      },
+      {
+        id: `similar-${datasetId}-2`,
+        title: `Related Dataset B for ${datasetId}`,
+        description: 'Another mock dataset with related information. This would typically contain data from a similar domain or time period.',
+        agency: 'Department of Education',
+        api_url: 'https://www.education.gov.au/mock-dataset-b.xlsx',
+        similarity_score: 0.78,
+      },
+      {
+        id: `similar-${datasetId}-3`,
+        title: `Complementary Data for ${datasetId}`,
+        description: 'A third mock dataset that provides additional context and supporting information for comprehensive analysis.',
+        agency: 'Australian Institute of Health and Welfare',
+        api_url: 'https://www.aihw.gov.au/mock-dataset-c.json',
+        similarity_score: 0.72,
+      },
+    ];
+
+    return {
+      dataset_id: datasetId,
+      answer: `Found ${mockSimilarDatasets.length} similar datasets related to ${datasetId}. These datasets provide complementary information and can help you gain deeper insights into your area of interest.`,
+      similar: mockSimilarDatasets,
+      count: mockSimilarDatasets.length,
+    };
   }
 
   /**

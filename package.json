@@ -10,12 +10,16 @@
     "lint:fix": "next lint --fix"
   },
   "dependencies": {
+    "@react-spring/web": "^10.0.1",
+    "@use-gesture/react": "^10.3.1",
+    "@xyflow/react": "^12.8.4",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-use-measure": "^2.1.7",
     "tailwind-merge": "^3.3.1",
     "uuid": "^11.1.0"
   },

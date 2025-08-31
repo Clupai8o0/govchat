@@ -102,3 +102,43 @@ export interface SimilarDataset {
   api_url: string;
   similarity_score: number;
 }
+
+// Types for the Tree Explorer feature
+export interface TreeNode {
+  id: string;
+  type: 'root' | 'dataset';
+  data: TreeNodeData;
+  position: { x: number; y: number };
+  parentId?: string;
+  expanded?: boolean;
+}
+
+export interface TreeNodeData {
+  title: string;
+  description?: string;
+  agency?: string;
+  api_url?: string;
+  similarity?: number;
+  datasetId?: string;
+  isRoot?: boolean;
+  isExpanded?: boolean;
+  isLoading?: boolean;
+  childCount?: number;
+  onExpand?: (nodeId: string) => void;
+  onDownload?: (apiUrl: string, title: string) => void;
+}
+
+export interface TreeEdge {
+  id: string;
+  source: string;
+  target: string;
+  type?: string;
+  animated?: boolean;
+}
+
+export interface TreeExplorerState {
+  nodes: TreeNode[];
+  edges: TreeEdge[];
+  expandedNodes: Set<string>;
+  loadingNodes: Set<string>;
+}

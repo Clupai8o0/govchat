@@ -10,7 +10,8 @@ import {
   Flower,
   Menu,
   X,
-  Sparkles
+  Sparkles,
+  TreePine
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useChat } from '@/contexts/chat-context';
@@ -22,6 +23,7 @@ import ChatHistory from './chat-history';
 import TrustMeter from './trust-meter';
 import SourcesPanel from './sources-panel';
 import SmartSuggestions from './smart-suggestions';
+import TreeExplorer from './tree-explorer';
 import { Textarea } from './animated-ai-chat';
 
 interface TabButtonProps {
@@ -297,7 +299,7 @@ export function GovChat() {
 				<div className="hidden lg:flex w-96 border-l border-white/[0.05] bg-black/10 backdrop-blur-xl flex-col min-h-0">
 					{/* Tab Navigation */}
 					<div className="border-b border-white/[0.05] p-4 flex-shrink-0">
-						<div className="grid grid-cols-3 gap-1 bg-white/[0.02] p-1 rounded-lg">
+						<div className="grid grid-cols-2 gap-1 bg-white/[0.02] p-1 rounded-lg mb-2">
 							<TabButton
 								id="trust"
 								label="Trust"
@@ -313,11 +315,20 @@ export function GovChat() {
 								onClick={setActiveTab}
 								badge={latestMessage?.audit.retrieved.length}
 							/>
+						</div>
+						<div className="grid grid-cols-2 gap-1 bg-white/[0.02] p-1 rounded-lg">
 							<TabButton
 								id="suggestions"
 								label="Explore"
 								icon={<Sparkles className="w-4 h-4" />}
 								isActive={activeTab === "suggestions"}
+								onClick={setActiveTab}
+							/>
+							<TabButton
+								id="tree"
+								label="Tree View"
+								icon={<TreePine className="w-4 h-4" />}
+								isActive={activeTab === "tree"}
 								onClick={setActiveTab}
 							/>
 						</div>
@@ -382,6 +393,32 @@ export function GovChat() {
 										/>
 									</motion.div>
 								)}
+
+								{activeTab === "tree" && (
+									<motion.div
+										key="tree"
+										initial={{ opacity: 0, x: 20 }}
+										animate={{ opacity: 1, x: 0 }}
+										exit={{ opacity: 0, x: -20 }}
+										transition={{ duration: 0.3 }}
+										className="h-full -m-4"
+									>
+										{latestMessage ? (
+											<TreeExplorer
+												initialQuery={latestMessage.question}
+												initialDatasets={latestMessage.audit.retrieved}
+												className="h-full"
+											/>
+										) : (
+											<div className="text-center py-12 m-4">
+												<TreePine className="w-12 h-12 text-white/40 mx-auto mb-4" />
+												<p className="text-white/60">
+													Ask a question to explore datasets in tree view
+												</p>
+											</div>
+										)}
+									</motion.div>
+								)}
 							</AnimatePresence>
 						</div>
 					</div>
@@ -425,7 +462,7 @@ export function GovChat() {
 
 							{/* Mobile Tab Navigation */}
 							<div className="border-b border-white/[0.05] p-4">
-								<div className="grid grid-cols-3 gap-1 bg-white/[0.02] p-1 rounded-lg">
+								<div className="grid grid-cols-2 gap-1 bg-white/[0.02] p-1 rounded-lg mb-2">
 									<TabButton
 										id="trust"
 										label="Trust"
@@ -441,11 +478,20 @@ export function GovChat() {
 										onClick={setActiveTab}
 										badge={latestMessage?.audit.retrieved.length}
 									/>
+								</div>
+								<div className="grid grid-cols-2 gap-1 bg-white/[0.02] p-1 rounded-lg">
 									<TabButton
 										id="suggestions"
 										label="Explore"
 										icon={<Sparkles className="w-4 h-4" />}
 										isActive={activeTab === "suggestions"}
+										onClick={setActiveTab}
+									/>
+									<TabButton
+										id="tree"
+										label="Tree View"
+										icon={<TreePine className="w-4 h-4" />}
+										isActive={activeTab === "tree"}
 										onClick={setActiveTab}
 									/>
 								</div>
@@ -508,6 +554,32 @@ export function GovChat() {
 													latestSources={latestMessage?.audit.retrieved || []}
 													onSuggestionClick={handleSuggestionClick}
 												/>
+											</motion.div>
+										)}
+
+										{activeTab === "tree" && (
+											<motion.div
+												key="tree-mobile"
+												initial={{ opacity: 0, x: 20 }}
+												animate={{ opacity: 1, x: 0 }}
+												exit={{ opacity: 0, x: -20 }}
+												transition={{ duration: 0.3 }}
+												className="h-full -m-4"
+											>
+												{latestMessage ? (
+													<TreeExplorer
+														initialQuery={latestMessage.question}
+														initialDatasets={latestMessage.audit.retrieved}
+														className="h-full"
+													/>
+												) : (
+													<div className="text-center py-12 m-4">
+														<TreePine className="w-12 h-12 text-white/40 mx-auto mb-4" />
+														<p className="text-white/60">
+															Ask a question to explore datasets in tree view
+														</p>
+													</div>
+												)}
 											</motion.div>
 										)}
 									</AnimatePresence>
