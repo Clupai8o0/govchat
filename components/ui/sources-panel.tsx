@@ -56,7 +56,6 @@ function SourceItem({ source, index }: SourceItemProps) {
         'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'xls': 'application/vnd.ms-excel',
         'json': 'application/json',
-        'xml': 'application/xml'
       };
       
       // Try direct download first
